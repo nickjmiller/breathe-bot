@@ -1,14 +1,13 @@
 import asyncio
-import interactions
 import os
-
 from collections import defaultdict
 
+import interactions
 from dotenv import load_dotenv
+from interactions import Client, Intents, listen
 from interactions.api.events import Component
 from interactions.api.voice.audio import AudioVolume
 from interactions.client.errors import VoiceNotConnected
-from interactions import Client, Intents, listen
 
 from breathe_config import BreatheConfig
 from components.duration_components import get_duration_components

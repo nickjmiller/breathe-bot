@@ -6,5 +6,28 @@ Box breathing assistant for discord. Invite the bot to your channel and configur
 
 1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306
 1. Configure your breathing exercise: `/breatheconf`
-    * By default there will be 5 iterations of four second intervals of each step: Breathing in, holding, breathing out, holding.
+    * By default there will be 5 iterations of four second intervals for each step: Breathing in, holding, breathing out, holding.
 1. Join a voice channel and start: `/breathe`
+
+## Development
+
+### Prerequisites
+1. Install uv: https://docs.astral.sh/uv/getting-started/installation/
+1. Install ffmpeg: https://github.com/oop7/ffmpeg-install-guide?tab=readme-ov-file
+
+> Optional - Install docker: https://docs.docker.com/engine/install/
+
+### Running the app
+
+Add a `.env` file with your BOT_SECRET: https://discord.com/developers/docs/quick-start/getting-started#fetching-your-credentials
+
+```bash
+uv run main.py        # Run the bot
+uv run pytest         # Run tests
+uvx ruff format       # Run the formatter
+uvx ruff check --fix  # Run the linter
+```
+
+#### Docker
+
+A simple compose file is included in this repo. Running `docker compose up` should build and run the dockerfile included here.
