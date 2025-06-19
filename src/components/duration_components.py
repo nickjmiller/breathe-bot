@@ -11,7 +11,7 @@ class SelectId(StrEnum):
     hold_out = auto()
 
 
-nums = [str(i) for i in range(2, 10)]
+nums = [str(i) for i in range(3, 11)]
 iterations = StringSelectMenu(
     *nums,
     placeholder="How many repetitions?",
@@ -27,6 +27,7 @@ breathe_in = StringSelectMenu(
     custom_id=SelectId.breathe_in,
 )
 hold_in = StringSelectMenu(
+    "None",
     *nums,
     placeholder="How long to hold after inhaling?",
     min_values=1,
@@ -41,6 +42,7 @@ breathe_out = StringSelectMenu(
     custom_id=SelectId.breathe_out,
 )
 hold_out = StringSelectMenu(
+    "None",
     *nums,
     placeholder="How long to hold after exhaling?",
     min_values=1,

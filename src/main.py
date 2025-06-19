@@ -28,7 +28,8 @@ async def on_ready():
 @listen(Component)
 async def on_component(event: Component):
     ctx = event.ctx
-    setattr(CHANNEL_MAP[ctx.channel_id], f"_{ctx.custom_id}", int(ctx.values[0]))
+    value = 0 if ctx.values[0] == "None" else int(ctx.values[0])
+    setattr(CHANNEL_MAP[ctx.channel_id], f"_{ctx.custom_id}", value)
     await ctx.send("Updated!", silent=True, delete_after=1)
 
 
@@ -64,14 +65,16 @@ async def play(ctx: interactions.SlashContext):
     for i in range(breathe_config.iterations):
         if i == breathe_config.iterations - 1:
             await ctx.send("Last one!", delete_after=50)
-        await ctx.voice_state.play(AudioVolume("assets/in.wav"))
+        await ctx.voice_state.play_no_wait(AudioVolume("assets/in.wav"))
         await asyncio.sleep(breathe_config.breathe_in)
-        await ctx.voice_state.play(AudioVolume("assets/hold.wav"))
-        await asyncio.sleep(breathe_config.hold_in)
-        await ctx.voice_state.play(AudioVolume("assets/out.wav"))
+        if breathe_config.hold_in > 0:
+            await ctx.voice_state.play_no_wait(AudioVolume("assets/hold.wav"))
+            await asyncio.sleep(breathe_config.hold_in)
+        await ctx.voice_state.play_no_wait(AudioVolume("assets/out.wav"))
         await asyncio.sleep(breathe_config.breathe_out)
-        await ctx.voice_state.play(AudioVolume("assets/hold.wav"))
-        await asyncio.sleep(breathe_config.hold_out)
+        if breathe_config.hold_out > 0:
+            await ctx.voice_state.play_no_wait(AudioVolume("assets/hold.wav"))
+            await asyncio.sleep(breathe_config.hold_out)
     await ctx.voice_state.play(AudioVolume("assets/done.ogg"))
     try:
         await channel.disconnect()
