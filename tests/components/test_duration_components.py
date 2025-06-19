@@ -1,4 +1,4 @@
-from components.duration_components import SelectId, get_duration_components
+from src.components.duration_components import SelectId, get_duration_components
 
 
 def test_get_duration_components_includes_all_selects():

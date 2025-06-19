@@ -26,7 +26,7 @@ class BreatheConfig:
     @property
     def breathe_out(self) -> float:
         # Subtract the duration of the audio file
-        return self._breathe_out - 1.53
+        return self._breathe_out - 1.48
 
     @property
     def hold_out(self) -> float:

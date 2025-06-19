@@ -2,6 +2,8 @@
 
 Box breathing assistant for discord. Invite the bot to your channel and configure your breathing, then follow guided exercises.
 
+![Logo](/repository/assets/logo.png?raw=true "Logo")
+
 ## Setup
 
 1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306

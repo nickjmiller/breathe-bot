@@ -1,4 +1,4 @@
-from breathe_config import BreatheConfig
+from src.breathe_config import BreatheConfig
 
 
 def test_breathe_config_getters_offset_values():

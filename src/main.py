@@ -29,7 +29,7 @@ async def on_ready():
 async def on_component(event: Component):
     ctx = event.ctx
     setattr(CHANNEL_MAP[ctx.channel_id], f"_{ctx.custom_id}", int(ctx.values[0]))
-    await ctx.send("Updated!", silent=True, delete_after=0.1)
+    await ctx.send("Updated!", silent=True, delete_after=1)
 
 
 @interactions.slash_command(
@@ -41,14 +41,21 @@ async def breatheconf(ctx: interactions.SlashContext):
         components=get_duration_components(),
         delete_after=60,
     )
-    await ctx.send("Configure breathing options.", silent=True, delete_after=0.1)
+    await ctx.send("Configure breathing options.", silent=True, delete_after=0.01)
 
 
 @interactions.slash_command("breathe", description="Start box breathing")
 async def play(ctx: interactions.SlashContext):
     breathe_config = CHANNEL_MAP[ctx.channel_id]
+    try:
+        channel = ctx.author.voice.channel
+    except AttributeError:
+        await ctx.send(
+            "You need to be in a voice channel to do the exercise!", delete_after=10
+        )
+        return
     if not ctx.voice_state:
-        await ctx.author.voice.channel.connect()
+        await channel.connect()
     await ctx.send(
         f"Starting box breathing for {breathe_config.duration:.0f} seconds!",
         delete_after=100,
@@ -67,7 +74,7 @@ async def play(ctx: interactions.SlashContext):
         await asyncio.sleep(breathe_config.hold_out)
     await ctx.voice_state.play(AudioVolume("assets/done.ogg"))
     try:
-        await ctx.author.voice.channel.disconnect()
+        await channel.disconnect()
     except VoiceNotConnected:
         pass
 

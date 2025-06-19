@@ -1,7 +1,7 @@
 [project]
 name = "breathe-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Breathing assistant for discord."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
