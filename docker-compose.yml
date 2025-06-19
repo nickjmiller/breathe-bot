@@ -1,0 +1,5 @@
+services:
+  breathe-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile

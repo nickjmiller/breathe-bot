@@ -1,0 +1,53 @@
+from enum import StrEnum, auto
+
+from interactions import StringSelectMenu, spread_to_rows
+
+
+class SelectId(StrEnum):
+    iterations = auto()
+    breathe_in = auto()
+    hold_in = auto()
+    breathe_out = auto()
+    hold_out = auto()
+
+
+nums = [str(i) for i in range(2, 10)]
+iterations = StringSelectMenu(
+    *nums,
+    placeholder="How many repetitions?",
+    min_values=1,
+    max_values=1,
+    custom_id=SelectId.iterations,
+)
+breathe_in = StringSelectMenu(
+    *nums,
+    placeholder="How long to inhale?",
+    min_values=1,
+    max_values=1,
+    custom_id=SelectId.breathe_in,
+)
+hold_in = StringSelectMenu(
+    *nums,
+    placeholder="How long to hold after inhaling?",
+    min_values=1,
+    max_values=1,
+    custom_id=SelectId.hold_in,
+)
+breathe_out = StringSelectMenu(
+    *nums,
+    placeholder="How long to exhale?",
+    min_values=1,
+    max_values=1,
+    custom_id=SelectId.breathe_out,
+)
+hold_out = StringSelectMenu(
+    *nums,
+    placeholder="How long to hold after exhaling?",
+    min_values=1,
+    max_values=1,
+    custom_id=SelectId.hold_out,
+)
+
+
+def get_duration_components():
+    return spread_to_rows(iterations, breathe_in, hold_in, breathe_out, hold_out)
