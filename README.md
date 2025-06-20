@@ -2,7 +2,7 @@
 
 Box breathing assistant for discord. Invite the bot to your channel and configure your breathing, then follow guided exercises.
 
-![code coverage](https://raw.githubusercontent.com/nickjmiller/breathe-bot/coverage-badge/coverage.svg?raw=true "Coverage")
+[![Build and test/lint/format](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml/badge.svg)](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml)
 
 ![Logo](assets/logo_256.png?raw=true "Logo")
 
