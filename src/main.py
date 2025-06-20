@@ -17,6 +17,7 @@ bot = Client(intents=Intents.DEFAULT)
 
 
 CHANNEL_MAP = defaultdict(BreatheConfig)
+CURRENT_CHANNELS = set()
 
 
 @listen()
@@ -29,7 +30,7 @@ async def on_ready():
 async def on_component(event: Component):
     ctx = event.ctx
     value = 0 if ctx.values[0] == "None" else int(ctx.values[0])
-    setattr(CHANNEL_MAP[ctx.channel_id], f"_{ctx.custom_id}", value)
+    setattr(CHANNEL_MAP[ctx.channel_id], ctx.custom_id, value)
     await ctx.send("Updated!", silent=True, delete_after=1)
 
 
@@ -51,10 +52,14 @@ async def play(ctx: interactions.SlashContext):
     try:
         channel = ctx.author.voice.channel
     except AttributeError:
-        await ctx.send(
+        return await ctx.send(
             "You need to be in a voice channel to do the exercise!", delete_after=10
         )
-        return
+    if channel in CURRENT_CHANNELS:
+        return await ctx.send(
+            "There is already a breathing exercise running!", delete_after=20
+        )
+    CURRENT_CHANNELS.add(channel)
     if not ctx.voice_state:
         await channel.connect()
     await ctx.send(
@@ -62,19 +67,11 @@ async def play(ctx: interactions.SlashContext):
         delete_after=100,
     )
     await ctx.voice_state.play(AudioVolume("assets/begin.wav"))
-    for i in range(breathe_config.iterations):
-        if i == breathe_config.iterations - 1:
-            await ctx.send("Last one!", delete_after=50)
-        await ctx.voice_state.play_no_wait(AudioVolume("assets/in.wav"))
-        await asyncio.sleep(breathe_config.breathe_in)
-        if breathe_config.hold_in > 0:
-            await ctx.voice_state.play_no_wait(AudioVolume("assets/hold.wav"))
-            await asyncio.sleep(breathe_config.hold_in)
-        await ctx.voice_state.play_no_wait(AudioVolume("assets/out.wav"))
-        await asyncio.sleep(breathe_config.breathe_out)
-        if breathe_config.hold_out > 0:
-            await ctx.voice_state.play_no_wait(AudioVolume("assets/hold.wav"))
-            await asyncio.sleep(breathe_config.hold_out)
+    for timer, audio in filter(
+        lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
+    ):
+        await ctx.voice_state.play(AudioVolume(audio))
+        await asyncio.sleep(timer)
     await ctx.voice_state.play(AudioVolume("assets/done.ogg"))
     try:
         await channel.disconnect()

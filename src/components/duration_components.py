@@ -4,7 +4,7 @@ from interactions import StringSelectMenu, spread_to_rows
 
 
 class SelectId(StrEnum):
-    iterations = auto()
+    rounds = auto()
     breathe_in = auto()
     hold_in = auto()
     breathe_out = auto()
@@ -12,12 +12,12 @@ class SelectId(StrEnum):
 
 
 nums = [str(i) for i in range(3, 11)]
-iterations = StringSelectMenu(
+rounds = StringSelectMenu(
     *nums,
     placeholder="How many repetitions?",
     min_values=1,
     max_values=1,
-    custom_id=SelectId.iterations,
+    custom_id=SelectId.rounds,
 )
 breathe_in = StringSelectMenu(
     *nums,
@@ -52,4 +52,4 @@ hold_out = StringSelectMenu(
 
 
 def get_duration_components():
-    return spread_to_rows(iterations, breathe_in, hold_in, breathe_out, hold_out)
+    return spread_to_rows(rounds, breathe_in, hold_in, breathe_out, hold_out)

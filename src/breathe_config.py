@@ -1,40 +1,28 @@
 from dataclasses import dataclass
+from typing import Generator
 
 
 @dataclass(init=True)
 class BreatheConfig:
-    _iterations: int = 5
-    _breathe_in: int = 4
-    _hold_in: int = 4
-    _breathe_out: int = 4
-    _hold_out: int = 4
-
-    @property
-    def iterations(self) -> int:
-        return self._iterations
-
-    @property
-    def breathe_in(self) -> float:
-        # Subtract the duration of the audio file
-        return self._breathe_in - 1.53
-
-    @property
-    def hold_in(self) -> float:
-        # Subtract the duration of the audio file
-        return self._hold_in - 1.35
-
-    @property
-    def breathe_out(self) -> float:
-        # Subtract the duration of the audio file
-        return self._breathe_out - 1.48
-
-    @property
-    def hold_out(self) -> float:
-        # Subtract the duration of the audio file
-        return self._hold_out - 1.35
+    rounds: int = 5
+    breathe_in: int = 4
+    hold_in: int = 4
+    breathe_out: int = 4
+    hold_out: int = 4
 
     @property
     def duration(self) -> float:
-        return self._iterations * (
-            self._breathe_in + self._breathe_out + self._hold_in + self._hold_out
+        return self.rounds * (
+            self.breathe_in + self.breathe_out + self.hold_in + self.hold_out
         )
+
+    def timer_audio_sequence(self) -> Generator[tuple[float, str], None, None]:
+        breathe_in = (self.breathe_in - 1.53, "assets/in.wav")
+        hold_in = (self.hold_in - 1.35, "assets/hold.wav")
+        breathe_out = (self.breathe_out - 1.48, "assets/out.wav")
+        hold_out = (self.hold_out - 1.35, "assets/hold.wav")
+        for _ in range(self.rounds):
+            yield breathe_in
+            yield hold_in
+            yield breathe_out
+            yield hold_out

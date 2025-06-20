@@ -8,7 +8,7 @@ Box breathing assistant for discord. Invite the bot to your channel and configur
 
 1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306
 1. Configure your breathing exercise: `/breatheconf`
-    * By default there will be 5 iterations of four second intervals for each step: Breathing in, holding, breathing out, holding.
+    * By default there will be 5 rounds of four second intervals for each step: Breathing in, holding, breathing out, holding.
 1. Join a voice channel and start: `/breathe`
 
 ## Development
