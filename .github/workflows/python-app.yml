@@ -25,9 +25,21 @@ jobs:
         python-version-file: ".python-version"
     - name: Install the project
       run: uv sync --locked --all-extras --dev
-    - name: Run tests
-      run: uv run pytest
     - name: Run linter
       run: uvx ruff check
     - name: Run formatter
       run: uvx ruff format --check
+    - name: Run tests
+      run: uv run pytest --cov
+    - name: Creating coverage folder
+      run: |
+        mkdir -p coverage
+    - name: Coverage Badge
+      uses: tj-actions/coverage-badge-py@v1.8
+      with:
+        output: coverage/coverage.svg
+    - name: Publish coverage report to coverage-badge branch
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: coverage-badge
+        folder: coverage
