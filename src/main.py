@@ -73,6 +73,7 @@ async def play(ctx: interactions.SlashContext):
         await ctx.voice_state.play(AudioVolume(audio))
         await asyncio.sleep(timer)
     await ctx.voice_state.play(AudioVolume("assets/done.ogg"))
+    CURRENT_CHANNELS.remove(channel)
     try:
         await channel.disconnect()
     except VoiceNotConnected:
