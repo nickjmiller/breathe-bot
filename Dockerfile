@@ -14,4 +14,4 @@ RUN apt-get update \
 WORKDIR /app
 RUN uv sync --locked --compile-bytecode
 
-CMD ["uv", "run", "src/main.py"]
+CMD ["uv", "run", "main.py"]

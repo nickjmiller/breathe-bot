@@ -6,5 +6,6 @@
     },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff"
-  }
+  },
+  "cSpell.words": ["asyncio", "breatheconf", "dotenv", "pytest"]
 }

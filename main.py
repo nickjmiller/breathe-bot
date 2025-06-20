@@ -1,4 +1,3 @@
-import asyncio
 import os
 from collections import defaultdict
 
@@ -6,11 +5,16 @@ import interactions
 from dotenv import load_dotenv
 from interactions import Client, Intents, listen
 from interactions.api.events import Component
-from interactions.api.voice.audio import AudioVolume
-from interactions.client.errors import VoiceNotConnected
 
-from breathe_config import BreatheConfig
-from components.duration_components import get_duration_components
+from src.breathe_config import BreatheConfig
+from src.components.duration_components import get_duration_components
+from src.play import (
+    ChannelAlreadyInUse,
+    MissingVoiceChannel,
+    box_breathe,
+    play_condition_check,
+    voice_channel_manager,
+)
 
 load_dotenv()
 bot = Client(intents=Intents.DEFAULT)
@@ -50,34 +54,22 @@ async def breatheconf(ctx: interactions.SlashContext):
 async def play(ctx: interactions.SlashContext):
     breathe_config = CHANNEL_MAP[ctx.channel_id]
     try:
-        channel = ctx.author.voice.channel
-    except AttributeError:
+        channel = play_condition_check(CURRENT_CHANNELS, ctx.author)
+    except MissingVoiceChannel:
         return await ctx.send(
             "You need to be in a voice channel to do the exercise!", delete_after=10
         )
-    if channel in CURRENT_CHANNELS:
+    except ChannelAlreadyInUse:
         return await ctx.send(
             "There is already a breathing exercise running!", delete_after=20
         )
-    CURRENT_CHANNELS.add(channel)
-    if not ctx.voice_state:
-        await channel.connect()
-    await ctx.send(
-        f"Starting box breathing for {breathe_config.duration:.0f} seconds!",
-        delete_after=100,
-    )
-    await ctx.voice_state.play(AudioVolume("assets/begin.wav"))
-    for timer, audio in filter(
-        lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
-    ):
-        await ctx.voice_state.play(AudioVolume(audio))
-        await asyncio.sleep(timer)
-    await ctx.voice_state.play(AudioVolume("assets/done.ogg"))
-    CURRENT_CHANNELS.remove(channel)
-    try:
-        await channel.disconnect()
-    except VoiceNotConnected:
-        pass
+    async with voice_channel_manager(channel, ctx.voice_state, CURRENT_CHANNELS):
+        await ctx.send(
+            f"Starting box breathing for {breathe_config.duration:.0f} seconds!",
+            delete_after=100,
+        )
+        await box_breathe(ctx.voice_state, breathe_config)
+    await ctx.send("Done!", silent=True, delete_after=10)
 
 
 bot.start(os.getenv("BOT_SECRET"))

@@ -13,6 +13,8 @@ class SelectId(StrEnum):
 
 nums = [str(i) for i in range(3, 11)]
 rounds = StringSelectMenu(
+    "1",
+    "2",
     *nums,
     placeholder="How many repetitions?",
     min_values=1,

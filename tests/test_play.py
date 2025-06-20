@@ -1,0 +1,137 @@
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from interactions.client.errors import VoiceNotConnected
+
+from src.breathe_config import BreatheConfig
+from src.play import (
+    ChannelAlreadyInUse,
+    MissingVoiceChannel,
+    box_breathe,
+    play_condition_check,
+    voice_channel_manager,
+)
+
+
+class TestVoiceChannelManager:
+    @pytest.fixture
+    def channel(self) -> AsyncMock:
+        return AsyncMock()
+
+    @pytest.fixture
+    def voice_state(self) -> MagicMock:
+        return MagicMock()
+
+    async def test_connects_and_disconnects_when_not_already_connected(
+        self, channel: AsyncMock
+    ):
+        current_channels = set()
+
+        channel.connect.assert_not_awaited()
+        channel.disconnect.assert_not_awaited()
+        assert channel not in current_channels
+        async with voice_channel_manager(
+            channel, None, current_channels
+        ) as yielded_channel:
+            assert channel in current_channels
+            channel.connect.assert_awaited_once()
+            assert yielded_channel is channel
+
+        assert channel not in current_channels
+        channel.disconnect.assert_awaited_once()
+        channel.connect.assert_awaited_once()
+
+    async def test_does_not_connect_when_already_connected(
+        self, channel: AsyncMock, voice_state: MagicMock
+    ):
+        current_channels = set()
+
+        channel.connect.assert_not_awaited()
+        channel.disconnect.assert_not_awaited()
+        assert channel not in current_channels
+        async with voice_channel_manager(
+            channel, voice_state, current_channels
+        ) as yielded_channel:
+            assert channel in current_channels
+            channel.connect.assert_not_awaited()
+            assert yielded_channel is channel
+
+        assert channel not in current_channels
+        channel.disconnect.assert_awaited_once()
+        channel.connect.assert_not_awaited()
+
+    async def test_ignores_disconnect_error(
+        self, channel: AsyncMock, voice_state: MagicMock
+    ):
+        current_channels = set()
+        channel.disconnect.side_effect = VoiceNotConnected()
+
+        assert channel not in current_channels
+        async with voice_channel_manager(
+            channel, voice_state, current_channels
+        ) as yielded_channel:
+            assert channel in current_channels
+            assert yielded_channel is channel
+
+        assert channel not in current_channels
+        channel.disconnect.assert_awaited_once()
+
+
+class TestBoxBreathe:
+    @pytest.fixture
+    def mock_sleep(self, mocker) -> AsyncMock:
+        return mocker.patch("src.play.asyncio.sleep", new_callable=AsyncMock)
+
+    async def test_box_breathe_in_sequence(self, mock_sleep: AsyncMock, mocker):
+        breathe_config = BreatheConfig(1, 2, 2, 2, 2)
+        voice_state = AsyncMock()
+        await box_breathe(voice_state, breathe_config)
+        assert voice_state.play.await_count == 6
+        mock_sleep.assert_has_awaits(
+            [
+                mocker.call(pytest.approx(0.47)),
+                mocker.call(pytest.approx(0.65)),
+                mocker.call(pytest.approx(0.52)),
+                mocker.call(pytest.approx(0.65)),
+            ],
+            any_order=False,
+        )
+
+    async def test_box_breathe_filters_zero_timers(self, mock_sleep: AsyncMock, mocker):
+        breathe_config = BreatheConfig(1, 2, 0, 2, 0)
+        voice_state = AsyncMock()
+        await box_breathe(voice_state, breathe_config)
+        assert voice_state.play.await_count == 4
+        mock_sleep.assert_has_awaits(
+            [
+                mocker.call(pytest.approx(0.47)),
+                mocker.call(pytest.approx(0.52)),
+            ],
+            any_order=False,
+        )
+
+
+class TestPlayConditionCheck:
+    @pytest.fixture()
+    def channel(self) -> str:
+        return "test_channel"
+
+    @pytest.fixture()
+    def author(self, channel: str) -> MagicMock:
+        author = MagicMock()
+        author.voice.channel = channel
+        return author
+
+    def test_returns_channel(self, author: MagicMock, channel: str):
+        assert play_condition_check(set(), author) == channel
+
+    def test_raises_when_voice_channel_missing(self, author: MagicMock):
+        del author.voice.channel
+        with pytest.raises(MissingVoiceChannel):
+            play_condition_check(set(), author)
+
+    def test_raises_when_already_in_set(self, author: MagicMock, channel: str):
+        current_channels = set()
+        current_channels.add(channel)
+        with pytest.raises(ChannelAlreadyInUse):
+            play_condition_check(current_channels, author)
