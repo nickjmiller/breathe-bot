@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.13-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 
 # Copy the project into the image
