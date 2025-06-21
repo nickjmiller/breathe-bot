@@ -1,5 +1,5 @@
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Generator
 
 
 @dataclass(init=True)
@@ -16,7 +16,7 @@ class BreatheConfig:
             self.breathe_in + self.breathe_out + self.hold_in + self.hold_out
         )
 
-    def timer_audio_sequence(self) -> Generator[tuple[float, str], None, None]:
+    def timer_audio_sequence(self) -> Generator[tuple[float, str]]:
         breathe_in = (self.breathe_in - 1.53, "assets/in.wav")
         hold_in = (self.hold_in - 1.35, "assets/hold.wav")
         breathe_out = (self.breathe_out - 1.48, "assets/out.wav")
