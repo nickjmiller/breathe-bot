@@ -26,3 +26,7 @@ class BreatheConfig:
             yield hold_in
             yield breathe_out
             yield hold_out
+
+
+BOX_BREATHE = BreatheConfig(5, 4, 4, 4, 4)
+FOUR_SEVEN_EIGHT = BreatheConfig(4, 4, 7, 8, 0)

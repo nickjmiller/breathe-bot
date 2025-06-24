@@ -1,6 +1,6 @@
 # breathe-bot
 
-Box breathing assistant for discord. Invite the bot to your channel and configure your breathing, then follow guided exercises.
+Guided breathing assistant for discord. Invite the bot to your channel and configure your breathing, then follow the exercises.
 
 [![Build and test/lint/format](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml/badge.svg)](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml)
 
@@ -9,9 +9,10 @@ Box breathing assistant for discord. Invite the bot to your channel and configur
 ## Setup
 
 1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306
-1. Configure your breathing exercise: `/breatheconf`
+1. [Optional] Configure your breathing exercise: `/breatheconf`
     * By default there will be 5 rounds of four second intervals for each step: Breathing in, holding, breathing out, holding.
 1. Join a voice channel and start: `/breathe`
+    * There are also preset exercises, such as box breathing. Try `/breathe_preset box` (or `/breathe_preset_box 3` to do 3 rounds of box breathing)
 
 ## Development
 

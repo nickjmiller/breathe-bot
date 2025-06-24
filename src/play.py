@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from interactions import TYPE_VOICE_CHANNEL, Member, User, VoiceState
+from interactions import TYPE_VOICE_CHANNEL, Member, SlashContext, User, VoiceState
 from interactions.api.voice.audio import AudioVolume
 from interactions.client.errors import VoiceNotConnected
 
@@ -53,7 +53,7 @@ async def voice_channel_manager(
             current_channels.remove(channel)
 
 
-async def box_breathe(voice_state: VoiceState, breathe_config: BreatheConfig):
+async def guided_breathe(voice_state: VoiceState, breathe_config: BreatheConfig):
     await voice_state.play(AudioVolume("assets/begin.wav"))
     for timer, audio in filter(
         lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
@@ -61,3 +61,27 @@ async def box_breathe(voice_state: VoiceState, breathe_config: BreatheConfig):
         await voice_state.play(AudioVolume(audio))
         await asyncio.sleep(timer)
     await voice_state.play(AudioVolume("assets/done.ogg"))
+
+
+async def channel_play(
+    current_channels: set[TYPE_VOICE_CHANNEL],
+    ctx: SlashContext,
+    breathe_config: BreatheConfig,
+):
+    try:
+        channel = play_condition_check(current_channels, ctx.author)
+    except MissingVoiceChannel:
+        return await ctx.send(
+            "You need to be in a voice channel to do the exercise!", delete_after=10
+        )
+    except ChannelAlreadyInUse:
+        return await ctx.send(
+            "There is already a breathing exercise running!", delete_after=20
+        )
+    async with voice_channel_manager(channel, ctx.voice_state, current_channels):
+        await ctx.send(
+            f"Starting guided breathing for {breathe_config.duration:.0f} seconds!",
+            delete_after=100,
+        )
+        await guided_breathe(ctx.voice_state, breathe_config)
+    await ctx.send("Done!", silent=True, delete_after=10)

@@ -30,4 +30,4 @@ jobs:
     - name: Run formatter
       run: uvx ruff format --check
     - name: Run tests
-      run: uv run pytest --cov
+      run: uv run pytest --cov=src
