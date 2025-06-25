@@ -1,0 +1,11 @@
+site_name: breathe-bot
+site_url: https://breathe-bot.pages.dev
+site_description: Documentation for the breathe-bot discord bot.
+site_author: Nick Miller
+theme:
+  logo: img/logo_256.png
+  name: readthedocs
+nav:
+  - Home: index.md
+  - TOS: terms-of-service.md
+  - Privacy Policy: privacy-policy.md
