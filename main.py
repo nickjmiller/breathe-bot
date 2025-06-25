@@ -7,6 +7,7 @@ from interactions import (
     Client,
     Intents,
     OptionType,
+    Snowflake,
     listen,
     slash_option,
 )
@@ -21,7 +22,7 @@ load_dotenv()
 bot = Client(intents=Intents.DEFAULT)
 
 
-CURRENT_CHANNELS = set()
+CURRENT_GUILDS: set[Snowflake] = set()
 
 
 @listen()
@@ -44,7 +45,7 @@ async def on_ready():
 )
 async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
     await channel_breathe(
-        CURRENT_CHANNELS,
+        CURRENT_GUILDS,
         ctx,
         replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
     )
@@ -65,7 +66,7 @@ async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
 )
 async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
     await channel_breathe(
-        CURRENT_CHANNELS,
+        CURRENT_GUILDS,
         ctx,
         replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
     )
@@ -121,7 +122,7 @@ async def breathe_custom(
     hold_out: int,
 ):
     await channel_breathe(
-        CURRENT_CHANNELS,
+        CURRENT_GUILDS,
         ctx,
         BreatheConfig(
             rounds=rounds,

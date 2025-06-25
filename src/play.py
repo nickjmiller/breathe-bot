@@ -1,15 +1,22 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from interactions import TYPE_VOICE_CHANNEL, Member, SlashContext, User, VoiceState
+from interactions import (
+    TYPE_VOICE_CHANNEL,
+    Member,
+    SlashContext,
+    Snowflake,
+    User,
+    VoiceState,
+)
 from interactions.api.voice.audio import AudioVolume
 from interactions.client.errors import VoiceNotConnected
 
 from .breathe_config import BreatheConfig
 
 
-class ChannelAlreadyInUse(Exception):
-    """Channel is already in use for the player."""
+class GuildAlreadyInUse(Exception):
+    """Guild is already in use for the player."""
 
     pass
 
@@ -21,15 +28,15 @@ class MissingVoiceChannel(Exception):
 
 
 def play_condition_check(
-    current_channels: set[TYPE_VOICE_CHANNEL],
+    current_guilds: set[Snowflake],
     author: Member | User,
 ) -> TYPE_VOICE_CHANNEL:
     try:
         channel = author.voice.channel
     except AttributeError:
         raise MissingVoiceChannel("Author is not in a voice channel.")
-    if channel in current_channels:
-        raise ChannelAlreadyInUse(f"Channel {channel} is already in use.")
+    if channel.guild.id in current_guilds:
+        raise GuildAlreadyInUse(f"Guild {channel.guild} is already in use.")
     return channel
 
 
@@ -37,9 +44,9 @@ def play_condition_check(
 async def voice_channel_manager(
     channel: TYPE_VOICE_CHANNEL,
     voice_state: VoiceState | None,
-    current_channels: set[TYPE_VOICE_CHANNEL],
+    current_guilds: set[Snowflake],
 ):
-    current_channels.add(channel)
+    current_guilds.add(channel.guild.id)
     if not voice_state:
         await channel.connect()
     try:
@@ -50,7 +57,7 @@ async def voice_channel_manager(
         except VoiceNotConnected:
             pass
         finally:
-            current_channels.remove(channel)
+            current_guilds.remove(channel.guild.id)
 
 
 async def guided_breathe(voice_state: VoiceState, breathe_config: BreatheConfig):
@@ -64,21 +71,21 @@ async def guided_breathe(voice_state: VoiceState, breathe_config: BreatheConfig)
 
 
 async def channel_breathe(
-    current_channels: set[TYPE_VOICE_CHANNEL],
+    current_guilds: set[Snowflake],
     ctx: SlashContext,
     breathe_config: BreatheConfig,
 ):
     try:
-        channel = play_condition_check(current_channels, ctx.author)
+        channel = play_condition_check(current_guilds, ctx.author)
     except MissingVoiceChannel:
         return await ctx.send(
             "You need to be in a voice channel to do the exercise!", delete_after=10
         )
-    except ChannelAlreadyInUse:
+    except GuildAlreadyInUse:
         return await ctx.send(
             "There is already a breathing exercise running!", delete_after=20
         )
-    async with voice_channel_manager(channel, ctx.voice_state, current_channels):
+    async with voice_channel_manager(channel, ctx.voice_state, current_guilds):
         await ctx.send(
             f"Starting guided breathing for {breathe_config.duration:.0f} seconds!",
             delete_after=100,
