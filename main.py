@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import replace
 
@@ -19,6 +20,15 @@ from src.play import (
     stop_guided_breathe,
 )
 
+# Configure basic logging to console
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum level for messages to be logged
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+# Get a logger instance
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 bot = Client(intents=Intents.DEFAULT)
 
@@ -28,7 +38,7 @@ CURRENT_GUILDS: set[Snowflake] = set()
 
 @listen()
 async def on_ready():
-    print("Ready")
+    logger.info("Ready")
 
 
 @interactions.slash_command(
@@ -45,6 +55,7 @@ async def on_ready():
     choices=ROUND_CHOICES,
 )
 async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
+    logger.debug("Starting box breathing.")
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
@@ -66,6 +77,7 @@ async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
     choices=ROUND_CHOICES,
 )
 async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
+    logger.debug("Starting 4-7-8 breathing.")
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
@@ -122,6 +134,9 @@ async def breathe_custom(
     breathe_out: int,
     hold_out: int,
 ):
+    logger.debug(
+        f"Starting custom breathing: {rounds=} {breathe_in=} {hold_in=} {breathe_out=} {hold_out=}"
+    )
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
@@ -142,6 +157,7 @@ async def breathe_custom(
     sub_cmd_description="Stop the current exercise",
 )
 async def breathe_stop(ctx: interactions.SlashContext):
+    logger.debug(f"Stopping breathing exercise in {ctx.guild_id}")
     await stop_guided_breathe(ctx)
 
 

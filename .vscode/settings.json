@@ -12,6 +12,7 @@
     "autouse",
     "breatheconf",
     "dotenv",
+    "levelname",
     "mkdocs",
     "pytest"
   ]
