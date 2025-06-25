@@ -24,6 +24,13 @@ def mock_sleep() -> Generator[AsyncMock]:
         yield m
 
 
+@pytest.fixture(autouse=True)
+def cleanup_should_stop():
+    """Fixture to clear SHOULD_STOP before each test."""
+    SHOULD_STOP.clear()
+    yield
+
+
 class TestVoiceChannelManager:
     @pytest.fixture
     def channel(self) -> AsyncMock:
@@ -195,9 +202,11 @@ class TestStopGuidedBreathe:
             "No current breathing exercises found in this server!", delete_after=ANY
         )
 
-    async def test_stops_guided_breathe(self, mock_sleep):
+    async def test_returns_if_guild_id_removed(self, mock_sleep):
         ctx = AsyncMock()
+
+        # Remove the guild_id while "sleeping"
+        mock_sleep.side_effect = lambda x: SHOULD_STOP.remove(ctx.guild_id)
         await stop_guided_breathe(ctx)
-        await guided_breathe(ctx.voice_state, BreatheConfig(), ctx.guild_id)
-        # guided_breathe is never able to sleep
-        assert mock_sleep.await_count == 1
+        assert ctx.send.await_count == 1
+        assert ctx.guild_id not in SHOULD_STOP

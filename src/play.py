@@ -112,3 +112,4 @@ async def stop_guided_breathe(ctx: SlashContext):
         await ctx.send(
             "No current breathing exercises found in this server!", delete_after=10
         )
+        SHOULD_STOP.remove(ctx.guild_id)
