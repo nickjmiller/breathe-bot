@@ -16,6 +16,7 @@ from src.breathe_config import BreatheConfig, BreathePresets
 from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
 from src.play import (
     channel_breathe,
+    stop_guided_breathe,
 )
 
 load_dotenv()
@@ -132,6 +133,16 @@ async def breathe_custom(
             hold_out=hold_out,
         ),
     )
+
+
+@interactions.slash_command(
+    "breathe",
+    description="Start guided breathing",
+    sub_cmd_name="stop",
+    sub_cmd_description="Stop the current exercise",
+)
+async def breathe_stop(ctx: interactions.SlashContext):
+    await stop_guided_breathe(ctx)
 
 
 bot.start(os.getenv("BOT_SECRET"))

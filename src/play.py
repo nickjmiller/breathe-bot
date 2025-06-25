@@ -12,6 +12,8 @@ from interactions import (
 from interactions.api.voice.audio import AudioVolume
 from interactions.client.errors import VoiceNotConnected
 
+from src.command import MAX_DURATION
+
 from .breathe_config import BreatheConfig
 
 
@@ -25,6 +27,9 @@ class MissingVoiceChannel(Exception):
     """Requester is not in a voice channel."""
 
     pass
+
+
+SHOULD_STOP: set[Snowflake] = set()
 
 
 def play_condition_check(
@@ -60,11 +65,16 @@ async def voice_channel_manager(
             current_guilds.remove(channel.guild.id)
 
 
-async def guided_breathe(voice_state: VoiceState, breathe_config: BreatheConfig):
+async def guided_breathe(
+    voice_state: VoiceState, breathe_config: BreatheConfig, guild_id: Snowflake
+):
     await voice_state.play(AudioVolume("assets/begin.wav"))
     for timer, audio in filter(
         lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
     ):
+        if guild_id in SHOULD_STOP:
+            SHOULD_STOP.remove(guild_id)
+            return
         await voice_state.play(AudioVolume(audio))
         await asyncio.sleep(timer)
     await voice_state.play(AudioVolume("assets/done.ogg"))
@@ -90,5 +100,15 @@ async def channel_breathe(
             f"Starting guided breathing for {breathe_config.duration:.0f} seconds!",
             delete_after=100,
         )
-        await guided_breathe(ctx.voice_state, breathe_config)
+        await guided_breathe(ctx.voice_state, breathe_config, ctx.guild_id)
     await ctx.send("Done!", silent=True, delete_after=10)
+
+
+async def stop_guided_breathe(ctx: SlashContext):
+    SHOULD_STOP.add(ctx.guild_id)
+    await ctx.send("Stopping the exercise...", delete_after=MAX_DURATION + 1)
+    await asyncio.sleep(MAX_DURATION)
+    if ctx.guild_id in SHOULD_STOP:
+        await ctx.send(
+            "No current breathing exercises found in this server!", delete_after=10
+        )

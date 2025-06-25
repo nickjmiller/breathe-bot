@@ -1,19 +1,27 @@
 from collections.abc import Generator
 from unittest import mock
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import ANY, AsyncMock, MagicMock
 
 import pytest
 from interactions.client.errors import VoiceNotConnected
 
 from src.breathe_config import BreatheConfig
 from src.play import (
+    SHOULD_STOP,
     GuildAlreadyInUse,
     MissingVoiceChannel,
     channel_breathe,
     guided_breathe,
     play_condition_check,
+    stop_guided_breathe,
     voice_channel_manager,
 )
+
+
+@pytest.fixture
+def mock_sleep() -> Generator[AsyncMock]:
+    with mock.patch("src.play.asyncio.sleep", new_callable=AsyncMock) as m:
+        yield m
 
 
 class TestVoiceChannelManager:
@@ -77,15 +85,10 @@ class TestVoiceChannelManager:
 
 
 class TestGuidedBreathe:
-    @pytest.fixture
-    def mock_sleep(self) -> Generator[AsyncMock]:
-        with mock.patch("src.play.asyncio.sleep", new_callable=AsyncMock) as m:
-            yield m
-
     async def test_returns_in_sequence(self, mock_sleep):
         breathe_config = BreatheConfig(1, 2, 2, 2, 2)
         voice_state = AsyncMock()
-        await guided_breathe(voice_state, breathe_config)
+        await guided_breathe(voice_state, breathe_config, MagicMock())
         assert voice_state.play.await_count == 6
         mock_sleep.assert_has_awaits(
             [
@@ -100,7 +103,7 @@ class TestGuidedBreathe:
     async def test_filters_zero_timers(self, mock_sleep):
         breathe_config = BreatheConfig(1, 2, 0, 2, 0)
         voice_state = AsyncMock()
-        await guided_breathe(voice_state, breathe_config)
+        await guided_breathe(voice_state, breathe_config, MagicMock())
         assert voice_state.play.await_count == 4
         mock_sleep.assert_has_awaits(
             [
@@ -109,6 +112,15 @@ class TestGuidedBreathe:
             ],
             any_order=False,
         )
+
+    async def test_stops_when_stopped(self, mock_sleep):
+        breathe_config = BreatheConfig(1, 2, 2, 2, 2)
+        voice_state = AsyncMock()
+        guild_id = MagicMock()
+        SHOULD_STOP.add(guild_id)
+        await guided_breathe(voice_state, breathe_config, guild_id)
+        assert voice_state.play.await_count == 1
+        mock_sleep.assert_not_awaited()
 
 
 class TestPlayConditionCheck:
@@ -157,11 +169,6 @@ class TestChannelPlay:
         mock_ctx.send.side_effect = send
         return mock_ctx
 
-    @pytest.fixture
-    def mock_sleep(self) -> Generator[AsyncMock]:
-        with mock.patch("src.play.asyncio.sleep", new_callable=AsyncMock) as m:
-            yield m
-
     async def test_no_channel_returns_missing_voice_channel(self, ctx):
         del ctx.author.voice.channel
         response = await channel_breathe(set(), ctx, BreatheConfig())
@@ -177,3 +184,20 @@ class TestChannelPlay:
         response = await channel_breathe(set(), ctx, BreatheConfig())
         assert response is None
         assert ctx.send.await_count == 2
+
+
+class TestStopGuidedBreathe:
+    async def test_sends_error_when_unable_to_stop(self, mock_sleep):
+        ctx = AsyncMock()
+        await stop_guided_breathe(ctx)
+        assert ctx.send.await_count == 2
+        ctx.send.assert_awaited_with(
+            "No current breathing exercises found in this server!", delete_after=ANY
+        )
+
+    async def test_stops_guided_breathe(self, mock_sleep):
+        ctx = AsyncMock()
+        await stop_guided_breathe(ctx)
+        await guided_breathe(ctx.voice_state, BreatheConfig(), ctx.guild_id)
+        # guided_breathe is never able to sleep
+        assert mock_sleep.await_count == 1
