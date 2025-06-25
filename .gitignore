@@ -14,3 +14,7 @@ site/
 .venv
 
 .env
+
+# Ignore mkdocs duplicate files
+docs/assets
+docs/index.md
