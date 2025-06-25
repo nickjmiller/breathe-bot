@@ -4,6 +4,8 @@ Guided breathing assistant for discord. Invite the bot to your channel and confi
 
 [![Build and test/lint/format](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml/badge.svg)](https://github.com/nickjmiller/breathe-bot/actions/workflows/python-app.yml)
 
+![Logo](img/logo_256.png)
+
 ## Setup
 
 1. [Invite the bot to your server](https://discord.com/oauth2/authorize?client_id=1385297548054495306)
