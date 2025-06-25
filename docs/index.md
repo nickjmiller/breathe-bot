@@ -6,7 +6,7 @@ Guided breathing assistant for discord. Invite the bot to your channel and confi
 
 ## Setup
 
-1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306
+1. [Invite the bot to your server](https://discord.com/oauth2/authorize?client_id=1385297548054495306)
 1. Join a voice channel and start with a preset: `/breathe box`
     * You can customize the number of rounds: `/breathe box 3` to do 3 rounds of box breathing
 
@@ -34,6 +34,8 @@ This technique involves inhaling, holding the breath, and then exhaling slowly.
 
 ## Development
 
+[Source code](https://github.com/nickjmiller/breathe-bot)
+
 ### Prerequisites
 1. Install uv: https://docs.astral.sh/uv/getting-started/installation/
 1. Install ffmpeg: https://github.com/oop7/ffmpeg-install-guide?tab=readme-ov-file
@@ -54,3 +56,11 @@ uvx ruff check --fix  # Run the linter
 #### Docker
 
 A simple compose file is included in this repo. Running `docker compose up` should build and run the dockerfile included here.
+
+### Updating Docs
+
+All documentation is included in the docs directory and built using [mkdocs](https://www.mkdocs.org/). The documentation site is updated on push to the repository automatically.
+
+```bash
+uvx mkdocs serve  # Preview the site locally
+```

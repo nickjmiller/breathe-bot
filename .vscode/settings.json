@@ -7,5 +7,5 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "cSpell.words": ["asyncio", "breatheconf", "dotenv", "pytest"]
+  "cSpell.words": ["asyncio", "breatheconf", "dotenv", "mkdocs", "pytest"]
 }
