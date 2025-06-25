@@ -126,7 +126,7 @@ class TestGuidedBreathe:
         guild_id = MagicMock()
         SHOULD_STOP.add(guild_id)
         await guided_breathe(voice_state, breathe_config, guild_id)
-        assert voice_state.play.await_count == 1
+        voice_state.play.assert_awaited_once()
         mock_sleep.assert_not_awaited()
 
 
@@ -208,5 +208,5 @@ class TestStopGuidedBreathe:
         # Remove the guild_id while "sleeping"
         mock_sleep.side_effect = lambda x: SHOULD_STOP.remove(ctx.guild_id)
         await stop_guided_breathe(ctx)
-        assert ctx.send.await_count == 1
+        ctx.send.assert_awaited_once()
         assert ctx.guild_id not in SHOULD_STOP
