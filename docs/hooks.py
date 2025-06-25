@@ -2,7 +2,7 @@ import os
 import shutil
 
 
-def copy_readme(*args, **kwargs):
+def on_startup(*args, **kwargs):
     shutil.copy("README.md", "docs/index.md")
     # Copy logo
     os.makedirs("docs/assets", exist_ok=True)

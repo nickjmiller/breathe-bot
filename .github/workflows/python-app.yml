@@ -32,4 +32,4 @@ jobs:
     - name: Run tests
       run: uv run pytest --cov=src
     - name: Run doc-builder
-      run: uvx --with mkdocs-simple-hooks mkdocs build
+      run: uvx --with mkdocs-material mkdocs build

@@ -2,14 +2,16 @@ site_name: breathe-bot
 site_url: https://breathe-bot.pages.dev
 site_description: Documentation for the breathe-bot discord bot.
 site_author: Nick Miller
+repo_url: https://github.com/nickjmiller/breathe-bot
 theme:
-  name: readthedocs
+  name: material
+  icon:
+    logo: material/lungs
+  favicon: img/favicon.ico
+  language: en
 nav:
   - Home: index.md
   - TOS: terms-of-service.md
   - Privacy Policy: privacy-policy.md
-plugins:
-  - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_pre_build: "docs.hooks:copy_readme"
+hooks:
+  - docs/hooks.py
