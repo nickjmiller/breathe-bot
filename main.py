@@ -48,7 +48,7 @@ async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
+        replace(BreathePresets.BOX_BREATHE.value, rounds=rounds),
     )
 
 
