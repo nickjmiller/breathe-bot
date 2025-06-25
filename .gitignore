@@ -16,5 +16,5 @@ site/
 .env
 
 # Ignore mkdocs duplicate files
-docs/assets
+docs/assets/logo_256.png
 docs/index.md
