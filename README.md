@@ -64,5 +64,5 @@ A simple compose file is included in this repo. Running `docker compose up` shou
 All documentation is included in the docs directory and built using [mkdocs](https://www.mkdocs.org/). The documentation site is updated on push to the repository automatically.
 
 ```bash
-uvx mkdocs serve  # Preview the site locally
+uvx --with mkdocs-simple-hooks mkdocs serve  # Preview the site locally
 ```
