@@ -63,7 +63,7 @@ async def guided_breathe(voice_state: VoiceState, breathe_config: BreatheConfig)
     await voice_state.play(AudioVolume("assets/done.ogg"))
 
 
-async def channel_play(
+async def channel_breathe(
     current_channels: set[TYPE_VOICE_CHANNEL],
     ctx: SlashContext,
     breathe_config: BreatheConfig,

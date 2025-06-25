@@ -1,5 +1,4 @@
 import os
-from collections import defaultdict
 from dataclasses import replace
 
 import interactions
@@ -8,63 +7,30 @@ from interactions import (
     Client,
     Intents,
     OptionType,
-    SlashCommandChoice,
     listen,
     slash_option,
 )
-from interactions.api.events import Component
 
-from src.breathe_config import BOX_BREATHE, FOUR_SEVEN_EIGHT, BreatheConfig
-from src.components.duration_components import get_duration_components
+from src.breathe_config import BreatheConfig, BreathePresets
+from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
 from src.play import (
-    channel_play,
+    channel_breathe,
 )
 
 load_dotenv()
 bot = Client(intents=Intents.DEFAULT)
 
 
-CHANNEL_MAP = defaultdict(BreatheConfig)
 CURRENT_CHANNELS = set()
-ROUND_CHOICES = [SlashCommandChoice(name=str(i), value=i) for i in range(1, 10)]
 
 
 @listen()
 async def on_ready():
     print("Ready")
-    print(f"This bot is owned by {bot.owner}")
-
-
-@listen(Component)
-async def on_component(event: Component):
-    ctx = event.ctx
-    value = 0 if ctx.values[0] == "None" else int(ctx.values[0])
-    setattr(CHANNEL_MAP[ctx.channel_id], ctx.custom_id, value)
-    await ctx.send("Updated!", silent=True, delete_after=1)
 
 
 @interactions.slash_command(
-    "breatheconf", description="Set up default parameters for breathing"
-)
-async def breatheconf(ctx: interactions.SlashContext):
-    await ctx.channel.send(
-        "Configure",
-        components=get_duration_components(),
-        delete_after=60,
-    )
-    await ctx.send("Configure breathing options.", silent=True, delete_after=0.01)
-
-
-@interactions.slash_command(
-    "breathe", description="Start guided breathing using the channel default parameters"
-)
-async def breathe(ctx: interactions.SlashContext):
-    breathe_config = CHANNEL_MAP[ctx.channel_id]
-    await channel_play(CURRENT_CHANNELS, ctx, breathe_config)
-
-
-@interactions.slash_command(
-    "breathe_preset",
+    "breathe",
     description="Start guided breathing",
     sub_cmd_name="box",
     sub_cmd_description="Box breathing, 5 rounds of 4-4-4-4",
@@ -76,15 +42,17 @@ async def breathe(ctx: interactions.SlashContext):
     opt_type=OptionType.INTEGER,
     choices=ROUND_CHOICES,
 )
-async def breathe_preset_box(ctx: interactions.SlashContext, rounds: int = 5):
-    await channel_play(CURRENT_CHANNELS, ctx, replace(BOX_BREATHE, rounds=rounds))
+async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
+    await channel_breathe(
+        CURRENT_CHANNELS, ctx, replace(BreathePresets.FOUR_SEVEN_EIGHT, rounds=rounds)
+    )
 
 
 @interactions.slash_command(
-    "breathe_preset",
+    "breathe",
     description="Start guided breathing",
     sub_cmd_name="478",
-    sub_cmd_description="Guided breathing, 4 rounds of 4-7-8",
+    sub_cmd_description="478 preset, 4 rounds of 4-7-8",
 )
 @slash_option(
     name="rounds",
@@ -93,8 +61,72 @@ async def breathe_preset_box(ctx: interactions.SlashContext, rounds: int = 5):
     opt_type=OptionType.INTEGER,
     choices=ROUND_CHOICES,
 )
-async def breathe_preset_478(ctx: interactions.SlashContext, rounds: int = 4):
-    await channel_play(CURRENT_CHANNELS, ctx, replace(FOUR_SEVEN_EIGHT, rounds=rounds))
+async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
+    await channel_breathe(
+        CURRENT_CHANNELS, ctx, replace(BreathePresets.FOUR_SEVEN_EIGHT, rounds=rounds)
+    )
+
+
+@interactions.slash_command(
+    "breathe",
+    description="Start guided breathing",
+    sub_cmd_name="custom",
+    sub_cmd_description="Define your own breathing exercise",
+)
+@slash_option(
+    name="rounds",
+    description="How many rounds",
+    required=True,
+    opt_type=OptionType.INTEGER,
+    choices=ROUND_CHOICES,
+)
+@slash_option(
+    name="breathe_in",
+    description="How long to breathe in",
+    required=True,
+    opt_type=OptionType.INTEGER,
+    choices=BREATHE_CHOICES,
+)
+@slash_option(
+    name="hold_in",
+    description="How long to hold in",
+    required=True,
+    opt_type=OptionType.INTEGER,
+    choices=HOLD_CHOICES,
+)
+@slash_option(
+    name="breathe_out",
+    description="How long to breathe out",
+    required=True,
+    opt_type=OptionType.INTEGER,
+    choices=BREATHE_CHOICES,
+)
+@slash_option(
+    name="hold_out",
+    description="How long to hold out",
+    required=True,
+    opt_type=OptionType.INTEGER,
+    choices=HOLD_CHOICES,
+)
+async def breathe_custom(
+    ctx: interactions.SlashContext,
+    rounds: int,
+    breathe_in: int,
+    hold_in: int,
+    breathe_out: int,
+    hold_out: int,
+):
+    await channel_breathe(
+        CURRENT_CHANNELS,
+        ctx,
+        BreatheConfig(
+            rounds=rounds,
+            breathe_in=breathe_in,
+            hold_in=hold_in,
+            breathe_out=breathe_out,
+            hold_out=hold_out,
+        ),
+    )
 
 
 bot.start(os.getenv("BOT_SECRET"))

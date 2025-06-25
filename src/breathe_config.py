@@ -1,3 +1,4 @@
+import enum
 from collections.abc import Generator
 from dataclasses import dataclass
 
@@ -28,5 +29,6 @@ class BreatheConfig:
             yield hold_out
 
 
-BOX_BREATHE = BreatheConfig(5, 4, 4, 4, 4)
-FOUR_SEVEN_EIGHT = BreatheConfig(4, 4, 7, 8, 0)
+class BreathePresets(enum.Enum):
+    BOX_BREATHE = BreatheConfig(5, 4, 4, 4, 4)
+    FOUR_SEVEN_EIGHT = BreatheConfig(4, 4, 7, 8, 0)

@@ -9,7 +9,7 @@ from src.breathe_config import BreatheConfig
 from src.play import (
     ChannelAlreadyInUse,
     MissingVoiceChannel,
-    channel_play,
+    channel_breathe,
     guided_breathe,
     play_condition_check,
     voice_channel_manager,
@@ -80,7 +80,7 @@ class TestGuidedBreathe:
         with mock.patch("src.play.asyncio.sleep", new_callable=AsyncMock) as m:
             yield m
 
-    async def test_guided_breathe_in_sequence(self, mock_sleep):
+    async def test_returns_in_sequence(self, mock_sleep):
         breathe_config = BreatheConfig(1, 2, 2, 2, 2)
         voice_state = AsyncMock()
         await guided_breathe(voice_state, breathe_config)
@@ -95,7 +95,7 @@ class TestGuidedBreathe:
             any_order=False,
         )
 
-    async def test_guided_breathe_filters_zero_timers(self, mock_sleep):
+    async def test_filters_zero_timers(self, mock_sleep):
         breathe_config = BreatheConfig(1, 2, 0, 2, 0)
         voice_state = AsyncMock()
         await guided_breathe(voice_state, breathe_config)
@@ -158,18 +158,18 @@ class TestChannelPlay:
         with mock.patch("src.play.asyncio.sleep", new_callable=AsyncMock) as m:
             yield m
 
-    async def test_returns_missing_voice_channel(self, ctx):
+    async def test_no_channel_returns_missing_voice_channel(self, ctx):
         del ctx.author.voice.channel
-        response = await channel_play(set(), ctx, BreatheConfig())
+        response = await channel_breathe(set(), ctx, BreatheConfig())
         assert response == "You need to be in a voice channel to do the exercise!"
 
-    async def test_returns_channel_already_in_use(self, ctx, channel):
+    async def test_existing_channel_returns_channel_already_in_use(self, ctx, channel):
         current_channels = set()
         current_channels.add(channel)
-        response = await channel_play(current_channels, ctx, BreatheConfig())
+        response = await channel_breathe(current_channels, ctx, BreatheConfig())
         assert response == "There is already a breathing exercise running!"
 
-    async def test_returns_done_when_complete(self, ctx, mock_sleep):
-        response = await channel_play(set(), ctx, BreatheConfig())
+    async def test_returns_none_when_complete(self, ctx, mock_sleep):
+        response = await channel_breathe(set(), ctx, BreatheConfig())
         assert response is None
         assert ctx.send.await_count == 2

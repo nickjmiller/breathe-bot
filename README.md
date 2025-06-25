@@ -9,10 +9,30 @@ Guided breathing assistant for discord. Invite the bot to your channel and confi
 ## Setup
 
 1. Invite the bot: https://discord.com/oauth2/authorize?client_id=1385297548054495306
-1. [Optional] Configure your breathing exercise: `/breatheconf`
-    * By default there will be 5 rounds of four second intervals for each step: Breathing in, holding, breathing out, holding.
-1. Join a voice channel and start: `/breathe`
-    * There are also preset exercises, such as box breathing. Try `/breathe_preset box` (or `/breathe_preset_box 3` to do 3 rounds of box breathing)
+1. Join a voice channel and start with a preset: `/breathe box`
+    * You can customize the number of rounds: `/breathe box 3` to do 3 rounds of box breathing
+
+Have your own guided breathing plan? You can completely customize the exercise:
+```bash
+/breathe custom {rounds} {breathe_in} {hold_in} {breathe_out} {hold_out}
+```
+
+
+### Presets
+
+There are currently two presets for guided breathing:
+
+#### Box Breathing
+
+This is a breathing technique where each inhale, hold, and exhale (and hold) take the same amount of time.
+
+[Cherry-picked study on the potential benefits of this technique](https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/)
+
+#### 4-7-8 Breathing
+
+This technique involves inhaling, holding the breath, and then exhaling slowly.
+
+[Cherry-picked study on potential benefits of this technique](https://pmc.ncbi.nlm.nih.gov/articles/PMC9277512/).
 
 ## Development
 
