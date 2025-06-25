@@ -44,7 +44,9 @@ async def on_ready():
 )
 async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
     await channel_breathe(
-        CURRENT_CHANNELS, ctx, replace(BreathePresets.FOUR_SEVEN_EIGHT, rounds=rounds)
+        CURRENT_CHANNELS,
+        ctx,
+        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
     )
 
 
@@ -63,7 +65,9 @@ async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
 )
 async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
     await channel_breathe(
-        CURRENT_CHANNELS, ctx, replace(BreathePresets.FOUR_SEVEN_EIGHT, rounds=rounds)
+        CURRENT_CHANNELS,
+        ctx,
+        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
     )
 
 
