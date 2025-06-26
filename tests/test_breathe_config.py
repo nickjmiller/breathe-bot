@@ -25,6 +25,15 @@ def test_breathe_config_calculates_duration_correctly():
             ],
         ),
         (
+            BreatheConfig(1, 4, 4, 4, 4, Voice.af_quiet),
+            [
+                (pytest.approx(2.37), "assets/voices/af_quiet/in.wav"),
+                (pytest.approx(2.7), "assets/voices/af_quiet/hold.wav"),
+                (pytest.approx(2.3), "assets/voices/af_quiet/out.wav"),
+                (pytest.approx(2.7), "assets/voices/af_quiet/hold.wav"),
+            ],
+        ),
+        (
             BreatheConfig(1, 4, 4, 4, 4, Voice.am),
             [
                 (pytest.approx(2.42), "assets/voices/am/in.wav"),
