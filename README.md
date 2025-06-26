@@ -12,11 +12,12 @@ Guided breathing assistant for discord. Invite the bot to your channel and confi
 
 1. [Invite the bot to your server](https://discord.com/oauth2/authorize?client_id=1385297548054495306)
 1. Join a voice channel and start with a preset: `/breathe box`
-    * You can customize the number of rounds: `/breathe box 3` to do 3 rounds of box breathing
+    * You can customize the number of rounds: `/breathe box rounds:3` to do 3 rounds of box breathing
+    * You can also change the guide's voice: `/breathe box voice:American Male`
 
 Have your own guided breathing plan? You can completely customize the exercise:
 ```bash
-/breathe custom {rounds} {breathe_in} {hold_in} {breathe_out} {hold_out}
+/breathe custom {rounds} {breathe_in} {hold_in} {breathe_out} {hold_out} {voice}
 ```
 
 You can stop a running breathing exercise using `/breathe stop`. This will stop whichever exercise is running in the guild.

@@ -13,8 +13,8 @@ from interactions import (
     slash_option,
 )
 
-from src.breathe_config import BreatheConfig, BreathePresets
-from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
+from src.breathe_config import BreatheConfig, BreathePresets, Voice
+from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES, VOICE_CHOICES
 from src.play import (
     channel_breathe,
     stop_guided_breathe,
@@ -52,12 +52,21 @@ async def on_ready():
     opt_type=OptionType.INTEGER,
     choices=ROUND_CHOICES,
 )
-async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
+@slash_option(
+    "voice",
+    description="Voice for the guided exercise",
+    required=False,
+    opt_type=OptionType.STRING,
+    choices=VOICE_CHOICES,
+)
+async def breathe_box(
+    ctx: interactions.SlashContext, rounds: int = 5, voice: str = Voice.af
+):
     logger.debug("Starting box breathing.")
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        replace(BreathePresets.BOX_BREATHE.value, rounds=rounds),
+        replace(BreathePresets.BOX_BREATHE.value, rounds=rounds, voice=voice),
     )
 
 
@@ -74,12 +83,21 @@ async def breathe_box(ctx: interactions.SlashContext, rounds: int = 5):
     opt_type=OptionType.INTEGER,
     choices=ROUND_CHOICES,
 )
-async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
+@slash_option(
+    "voice",
+    description="Voice for the guided exercise",
+    required=False,
+    opt_type=OptionType.STRING,
+    choices=VOICE_CHOICES,
+)
+async def breathe_478(
+    ctx: interactions.SlashContext, rounds: int = 4, voice: str = Voice.af
+):
     logger.debug("Starting 4-7-8 breathing.")
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds),
+        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds, voice=voice),
     )
 
 
@@ -124,6 +142,13 @@ async def breathe_478(ctx: interactions.SlashContext, rounds: int = 4):
     opt_type=OptionType.INTEGER,
     choices=HOLD_CHOICES,
 )
+@slash_option(
+    "voice",
+    description="Voice for the guided exercise",
+    required=False,
+    opt_type=OptionType.STRING,
+    choices=VOICE_CHOICES,
+)
 async def breathe_custom(
     ctx: interactions.SlashContext,
     rounds: int,
@@ -131,9 +156,10 @@ async def breathe_custom(
     hold_in: int,
     breathe_out: int,
     hold_out: int,
+    voice: str = Voice.af,
 ):
     logger.debug(
-        f"Starting custom breathing: {rounds=} {breathe_in=} {hold_in=} {breathe_out=} {hold_out=}"
+        f"Starting custom breathing: {rounds=} {breathe_in=} {hold_in=} {breathe_out=} {hold_out=} {voice=}"
     )
     await channel_breathe(
         CURRENT_GUILDS,
@@ -144,6 +170,7 @@ async def breathe_custom(
             hold_in=hold_in,
             breathe_out=breathe_out,
             hold_out=hold_out,
+            voice=voice,
         ),
     )
 

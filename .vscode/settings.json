@@ -12,6 +12,7 @@
     "autouse",
     "breatheconf",
     "dotenv",
+    "Kokoro",
     "levelname",
     "mkdocs",
     "pytest"
