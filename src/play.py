@@ -78,7 +78,7 @@ async def voice_channel_manager(
 async def guided_breathe(
     voice_state: VoiceState, breathe_config: BreatheConfig, guild_id: Snowflake
 ):
-    await voice_state.play(AudioVolume("assets/begin.wav"))
+    await voice_state.play(AudioVolume("assets/voices/af/begin.wav"))
     for timer, audio in filter(
         lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
     ):

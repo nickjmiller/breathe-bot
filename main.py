@@ -20,13 +20,11 @@ from src.play import (
     stop_guided_breathe,
 )
 
-# Configure basic logging to console
 logging.basicConfig(
-    level=logging.INFO,  # Set the minimum level for messages to be logged
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-# Get a logger instance
 logger = logging.getLogger(__name__)
 
 load_dotenv()

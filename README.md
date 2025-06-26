@@ -70,3 +70,7 @@ All documentation is included in the docs directory and built using [mkdocs](htt
 ```bash
 uvx --with mkdocs-material mkdocs serve  # Preview the site locally
 ```
+
+## Attribution
+
+This software uses [Kokoro TTS](https://huggingface.co/hexgrad/Kokoro-82M) to generate audio. Kokoro TTS is licensed under the Apache License, Version 2.0: [License](https://github.com/hexgrad/kokoro/blob/main/LICENSE).
