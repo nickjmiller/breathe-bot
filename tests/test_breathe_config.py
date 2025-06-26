@@ -27,10 +27,10 @@ def test_breathe_config_calculates_duration_correctly():
         (
             BreatheConfig(1, 4, 4, 4, 4, Voice.am),
             [
-                (pytest.approx(2.7), "assets/voices/am/in.wav"),
-                (pytest.approx(2.92), "assets/voices/am/hold.wav"),
-                (pytest.approx(2.7), "assets/voices/am/out.wav"),
-                (pytest.approx(2.92), "assets/voices/am/hold.wav"),
+                (pytest.approx(2.42), "assets/voices/am/in.wav"),
+                (pytest.approx(2.67), "assets/voices/am/hold.wav"),
+                (pytest.approx(2.47), "assets/voices/am/out.wav"),
+                (pytest.approx(2.67), "assets/voices/am/hold.wav"),
             ],
         ),
     ],

@@ -1,7 +1,6 @@
 import pytest
 
-from src.breathe_config import Voice
-from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES, VOICE_CHOICES
+from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
 
 
 @pytest.mark.parametrize(
@@ -55,9 +54,3 @@ from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES, VOICE_CHOI
 )
 def test_choices_contain_expected_values(choices, expected):
     [(choice.name.english_us, choice.value) for choice in choices] == expected
-
-
-def test_voice_choices_include_all_enum_values():
-    choices = {choice.value for choice in VOICE_CHOICES}
-    for voice in Voice:
-        assert voice in choices

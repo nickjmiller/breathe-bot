@@ -6,23 +6,32 @@ from enum import auto
 VOICE_DIR = "assets/voices"
 
 
+@dataclass(frozen=True)
+class Duration:
+    breathe_in: float
+    breathe_out: float
+    hold: float
+
+
 class Voice(enum.StrEnum):
     af = auto()
     am = auto()
 
+    @property
+    def display_name(self):
+        match self:
+            case Voice.af:
+                return "American Female"
+            case Voice.am:
+                return "American Male"
 
-DURATIONS = {
-    Voice.af: {
-        "in": 1.53,
-        "hold": 1.35,
-        "out": 1.48,
-    },
-    Voice.am: {
-        "in": 1.30,
-        "hold": 1.08,
-        "out": 1.30,
-    },
-}
+
+def get_durations(voice: Voice):
+    match voice:
+        case Voice.af:
+            return Duration(breathe_in=1.53, breathe_out=1.48, hold=1.35)
+        case Voice.am:
+            return Duration(breathe_in=1.58, breathe_out=1.53, hold=1.33)
 
 
 @dataclass(init=True)
@@ -45,21 +54,21 @@ class BreatheConfig:
         return f"{VOICE_DIR}/{self.voice}/begin.wav"
 
     def timer_audio_sequence(self) -> Generator[tuple[float, str]]:
-        durations = DURATIONS[self.voice]
+        durations = get_durations(self.voice)
         breathe_in = (
-            self.breathe_in - durations["in"],
+            self.breathe_in - durations.breathe_in,
             f"{VOICE_DIR}/{self.voice}/in.wav",
         )
         hold_in = (
-            self.hold_in - durations["hold"],
+            self.hold_in - durations.hold,
             f"{VOICE_DIR}/{self.voice}/hold.wav",
         )
         breathe_out = (
-            self.breathe_out - durations["out"],
+            self.breathe_out - durations.breathe_out,
             f"{VOICE_DIR}/{self.voice}/out.wav",
         )
         hold_out = (
-            self.hold_out - durations["hold"],
+            self.hold_out - durations.hold,
             f"{VOICE_DIR}/{self.voice}/hold.wav",
         )
         for _ in range(self.rounds):
