@@ -13,5 +13,10 @@ nav:
   - Home: index.md
   - TOS: terms-of-service.md
   - Privacy Policy: privacy-policy.md
+  - TTS Generation: tts.ipynb
 hooks:
   - docs/hooks.py
+plugins:
+  - search
+  - mkdocs-jupyter:
+      include: ["*.ipynb"]

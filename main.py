@@ -1,6 +1,5 @@
 import logging
 import os
-from dataclasses import replace
 
 import interactions
 from dotenv import load_dotenv
@@ -13,7 +12,10 @@ from interactions import (
     slash_option,
 )
 
-from src.breathe_config import BreatheConfig, BreathePresets, Voice
+from src.breathe_config import (
+    Voice,
+    breathe_config_cache,
+)
 from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES, VOICE_CHOICES
 from src.play import (
     channel_breathe,
@@ -66,7 +68,14 @@ async def breathe_box(
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        replace(BreathePresets.BOX_BREATHE.value, rounds=rounds, voice=voice),
+        breathe_config_cache(
+            voice=voice,
+            breathe_in=4,
+            hold_in=4,
+            breathe_out=4,
+            hold_out=4,
+        ),
+        rounds,
     )
 
 
@@ -97,7 +106,14 @@ async def breathe_478(
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        replace(BreathePresets.FOUR_SEVEN_EIGHT.value, rounds=rounds, voice=voice),
+        breathe_config_cache(
+            voice=voice,
+            breathe_in=4,
+            hold_in=7,
+            breathe_out=8,
+            hold_out=0,
+        ),
+        rounds,
     )
 
 
@@ -164,14 +180,14 @@ async def breathe_custom(
     await channel_breathe(
         CURRENT_GUILDS,
         ctx,
-        BreatheConfig(
-            rounds=rounds,
+        breathe_config_cache(
             breathe_in=breathe_in,
             hold_in=hold_in,
             breathe_out=breathe_out,
             hold_out=hold_out,
             voice=voice,
         ),
+        rounds,
     )
 
 

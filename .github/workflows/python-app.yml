@@ -29,7 +29,9 @@ jobs:
       run: uvx ruff check
     - name: Run formatter
       run: uvx ruff format --check
+    - name: Run type-checker
+      run: uvx ty check
     - name: Run tests
       run: uv run pytest --cov=src
     - name: Run doc-builder
-      run: uvx --with mkdocs-material mkdocs build
+      run: uvx --with mkdocs-material --with mkdocs-jupyter mkdocs build

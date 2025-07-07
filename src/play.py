@@ -1,9 +1,10 @@
-import asyncio
 import logging
+import tempfile
 from contextlib import asynccontextmanager
 
 from interactions import (
     TYPE_VOICE_CHANNEL,
+    ActiveVoiceState,
     Member,
     SlashContext,
     Snowflake,
@@ -12,8 +13,6 @@ from interactions import (
 )
 from interactions.api.voice.audio import AudioVolume
 from interactions.client.errors import VoiceNotConnected
-
-from src.command import MAX_DURATION
 
 from .breathe_config import BreatheConfig
 
@@ -32,18 +31,16 @@ class MissingVoiceChannel(Exception):
 
 logger = logging.getLogger(__name__)
 
-SHOULD_STOP: set[Snowflake] = set()
-
 
 def play_condition_check(
     current_guilds: set[Snowflake],
     author: Member | User,
 ) -> TYPE_VOICE_CHANNEL:
     try:
-        channel = author.voice.channel
+        channel = author.voice.channel  # ty: ignore[possibly-unbound-attribute]
     except AttributeError:
         logger.info(
-            f"Attempted to start breathing exercise without a voice channel, guild={author.guild.id}"
+            f"Attempted to start breathing exercise without a voice channel, {author.id}"
         )
         raise MissingVoiceChannel("Author is not in a voice channel.")
     if channel.guild.id in current_guilds:
@@ -64,7 +61,7 @@ async def voice_channel_manager(
     if not voice_state:
         await channel.connect()
     try:
-        yield channel
+        yield channel.voice_state
     finally:
         try:
             await channel.disconnect()
@@ -76,18 +73,12 @@ async def voice_channel_manager(
 
 
 async def guided_breathe(
-    voice_state: VoiceState, breathe_config: BreatheConfig, guild_id: Snowflake
+    voice_state: ActiveVoiceState, breathe_config: BreatheConfig, rounds: int
 ):
-    await voice_state.play(AudioVolume(breathe_config.begin_audio))
-    for timer, audio in filter(
-        lambda x: x[0] > 0, breathe_config.timer_audio_sequence()
-    ):
-        if guild_id in SHOULD_STOP:
-            logger.info(f"Stopped running exercise in guild: {guild_id}")
-            SHOULD_STOP.remove(guild_id)
-            return
-        await voice_state.play(AudioVolume(audio))
-        await asyncio.sleep(timer)
+    with tempfile.NamedTemporaryFile(suffix=".ogg") as tmpfile:
+        logger.info(f"Created temporary file at: {tmpfile.name}")
+        breathe_config.audio(rounds).export(tmpfile, format="ogg")
+        await voice_state.play(AudioVolume(tmpfile.name))
     await voice_state.play(AudioVolume("assets/done.ogg"))
 
 
@@ -95,6 +86,7 @@ async def channel_breathe(
     current_guilds: set[Snowflake],
     ctx: SlashContext,
     breathe_config: BreatheConfig,
+    rounds: int,
 ):
     try:
         channel = play_condition_check(current_guilds, ctx.author)
@@ -106,25 +98,31 @@ async def channel_breathe(
         return await ctx.send(
             "There is already a breathing exercise running!", delete_after=20
         )
-    async with voice_channel_manager(channel, ctx.voice_state, current_guilds):
+    async with voice_channel_manager(
+        channel, ctx.voice_state, current_guilds
+    ) as voice_state:
         await ctx.send(
-            f"Starting guided breathing for {breathe_config.duration:.0f} seconds!",
+            f"Starting guided breathing for {(breathe_config.round_duration * rounds):.0f} seconds!",
             delete_after=100,
         )
-        await guided_breathe(ctx.voice_state, breathe_config, ctx.guild_id)
+        if voice_state is None:
+            logger.error(
+                f"Voice state was none after connecting to the channel, {ctx=}"
+            )
+            return await ctx.send(
+                "There was an issue starting the exercise!", delete_after=20
+            )
+        await guided_breathe(voice_state, breathe_config, rounds)
     await ctx.send("Done!", silent=True, delete_after=10)
 
 
 async def stop_guided_breathe(ctx: SlashContext):
-    SHOULD_STOP.add(ctx.guild_id)
-    logger.info(f"Added {ctx.guild_id} to SHOULD_STOP, current size {len(SHOULD_STOP)}")
-    await ctx.send("Stopping the exercise...", delete_after=MAX_DURATION + 1)
-    await asyncio.sleep(MAX_DURATION)
-    if ctx.guild_id in SHOULD_STOP:
+    if ctx.voice_state is None:
         logger.info(
-            f"Tried to stop an exercise while none were running: guild={ctx.guild_id}"
+            f"Tried stopping a guided breathing with no voice context, {ctx.guild_id=}"
         )
-        await ctx.send(
+        return await ctx.send(
             "No current breathing exercises found in this server!", delete_after=10
         )
-        SHOULD_STOP.remove(ctx.guild_id)
+    await ctx.voice_state.channel.disconnect()
+    await ctx.send("Stopped!", delete_after=10)
