@@ -11,6 +11,7 @@
     "asyncio",
     "autouse",
     "breatheconf",
+    "Carboni",
     "Colab",
     "dotenv",
     "ipynb",
