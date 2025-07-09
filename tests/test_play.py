@@ -75,7 +75,7 @@ class TestVoiceChannelManager:
 
 class TestGuidedBreathe:
     async def test_plays_expected_audio(self):
-        breathe_config = BreatheConfig(2, 2, 2, 2)
+        breathe_config = BreatheConfig()
         voice_state = AsyncMock()
         await guided_breathe(voice_state, breathe_config, 2)
         assert voice_state.play.await_count == 2

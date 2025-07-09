@@ -8,7 +8,7 @@ from pydub import AudioSegment
 VOICE_DIR = "assets/voices"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Duration:
     breathe_in: float
     breathe_out: float
@@ -41,7 +41,7 @@ def get_durations(voice: Voice):
             return Duration(breathe_in=1.58, breathe_out=1.53, hold=1.33)
 
 
-@dataclass(init=True, frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class BreatheConfig:
     breathe_in: int = 4
     hold_in: int = 4
