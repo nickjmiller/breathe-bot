@@ -6,17 +6,22 @@ from dotenv import load_dotenv
 from interactions import (
     Client,
     Intents,
-    OptionType,
     Snowflake,
     listen,
-    slash_option,
 )
 
 from src.breathe_config import (
     Voice,
     breathe_config_cache,
 )
-from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES, VOICE_CHOICES
+from src.command import (
+    breathe_in_option,
+    breathe_out_option,
+    hold_in_option,
+    hold_out_option,
+    round_option,
+    voice_option,
+)
 from src.play import (
     channel_breathe,
     stop_guided_breathe,
@@ -47,20 +52,8 @@ async def on_ready():
     sub_cmd_name="box",
     sub_cmd_description="Box breathing, 5 rounds of 4-4-4-4",
 )
-@slash_option(
-    name="rounds",
-    description="How many rounds to breathe, default is 5",
-    required=False,
-    opt_type=OptionType.INTEGER,
-    choices=ROUND_CHOICES,
-)
-@slash_option(
-    "voice",
-    description="Voice for the guided exercise",
-    required=False,
-    opt_type=OptionType.STRING,
-    choices=VOICE_CHOICES,
-)
+@round_option
+@voice_option
 async def breathe_box(
     ctx: interactions.SlashContext, rounds: int = 5, voice: str = Voice.af
 ):
@@ -85,20 +78,8 @@ async def breathe_box(
     sub_cmd_name="478",
     sub_cmd_description="478 preset, 4 rounds of 4-7-8",
 )
-@slash_option(
-    name="rounds",
-    description="How many rounds to breathe, default is 4",
-    required=False,
-    opt_type=OptionType.INTEGER,
-    choices=ROUND_CHOICES,
-)
-@slash_option(
-    "voice",
-    description="Voice for the guided exercise",
-    required=False,
-    opt_type=OptionType.STRING,
-    choices=VOICE_CHOICES,
-)
+@round_option
+@voice_option
 async def breathe_478(
     ctx: interactions.SlashContext, rounds: int = 4, voice: str = Voice.af
 ):
@@ -123,48 +104,12 @@ async def breathe_478(
     sub_cmd_name="custom",
     sub_cmd_description="Define your own breathing exercise",
 )
-@slash_option(
-    name="rounds",
-    description="How many rounds",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=ROUND_CHOICES,
-)
-@slash_option(
-    name="breathe_in",
-    description="How long to breathe in",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=BREATHE_CHOICES,
-)
-@slash_option(
-    name="hold_in",
-    description="How long to hold in",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=HOLD_CHOICES,
-)
-@slash_option(
-    name="breathe_out",
-    description="How long to breathe out",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=BREATHE_CHOICES,
-)
-@slash_option(
-    name="hold_out",
-    description="How long to hold out",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=HOLD_CHOICES,
-)
-@slash_option(
-    "voice",
-    description="Voice for the guided exercise",
-    required=False,
-    opt_type=OptionType.STRING,
-    choices=VOICE_CHOICES,
-)
+@round_option
+@breathe_in_option
+@hold_in_option
+@breathe_out_option
+@hold_out_option
+@voice_option
 async def breathe_custom(
     ctx: interactions.SlashContext,
     rounds: int,
