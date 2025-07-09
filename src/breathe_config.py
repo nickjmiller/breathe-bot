@@ -70,7 +70,7 @@ class BreatheConfig:
             self._round_audio * rounds
         )
 
-    @property
+    @cached_property
     def round_duration(self) -> float:
         return self.breathe_in + self.breathe_out + self.hold_in + self.hold_out
 
