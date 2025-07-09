@@ -26,12 +26,17 @@ def test_breathe_config_calculates_duration_correctly():
             16,  # seconds
         ),
         (
+            BreatheConfig(2, 2, 3, 0, Voice.af_quiet),
+            7,  # seconds
+        ),
+        (
             BreatheConfig(2, 0, 4, 0, Voice.am),
             6,  # seconds
         ),
     ],
 )
 def test_breathe_config_generates_expected_round_audio(config, expected):
+    # Round it to allow for small precision errors
     assert round(len(config._round_audio) / 1000) == expected
 
 
