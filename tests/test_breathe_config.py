@@ -44,6 +44,7 @@ def test_breathe_config_calculates_duration_correctly():
 def test_breathe_config_generates_expected_round_audio(config, expected):
     # Round it to allow for small precision errors
     assert round(len(config._round_audio) / 1000) == expected
+    assert round(len(config._round_audio_short) / 1000) == expected
 
 
 def test_breathe_config_generates_expected_audio():
