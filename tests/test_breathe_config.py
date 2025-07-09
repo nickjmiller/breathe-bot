@@ -1,16 +1,7 @@
 import pytest
 
-from src.breathe_config import BreatheConfig, Voice, breathe_config_cache, get_durations
-
-
-def test_voice_has_display_name():
-    for voice in Voice:
-        assert voice.display_name is not None
-
-
-def test_voice_has_durations():
-    for voice in Voice:
-        assert get_durations(voice) is not None
+from src.breathe_config import BreatheConfig, breathe_config_cache
+from src.voice import Voice
 
 
 def test_breathe_config_calculates_duration_correctly():

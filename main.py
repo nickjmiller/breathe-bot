@@ -10,10 +10,7 @@ from interactions import (
     listen,
 )
 
-from src.breathe_config import (
-    Voice,
-    breathe_config_cache,
-)
+from src.breathe_config import breathe_config_cache
 from src.command import (
     breathe_in_option,
     breathe_out_option,
@@ -26,6 +23,7 @@ from src.play import (
     channel_breathe,
     stop_guided_breathe,
 )
+from src.voice import Voice
 
 logging.basicConfig(
     level=logging.INFO,

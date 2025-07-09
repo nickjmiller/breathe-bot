@@ -1,6 +1,6 @@
 from interactions import OptionType, SlashCommandChoice, slash_option
 
-from src.breathe_config import Voice
+from .voice import Voice
 
 MAX_DURATION = 10
 ROUND_CHOICES = [SlashCommandChoice(name=str(i), value=i) for i in range(1, 11)]
