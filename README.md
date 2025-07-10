@@ -58,6 +58,7 @@ uv run main.py        # Run the bot
 uv run pytest         # Run tests
 uvx ruff format       # Run the formatter
 uvx ruff check --fix  # Run the linter
+uvx ty check          # Run the type checker
 ```
 
 #### Docker
