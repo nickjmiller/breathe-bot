@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from functools import cache, cached_property
+from pathlib import Path
 
 from pydub import AudioSegment
 
-from .voice import VOICE_DIR, Voice, get_durations
+from voice import VOICE_DIR, Voice, get_durations
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -14,51 +15,68 @@ class BreatheConfig:
     hold_out: int = 4
     voice: Voice = Voice.af
 
-    def generate_round_audio(self, short=False):
-        durations = get_durations(self.voice)
+    def _add_step(
+        self,
+        base_audio: AudioSegment,
+        folder: Path,
+        filename: str,
+        target_sec: int,
+        actual_sec: float,
+    ) -> AudioSegment:
+        step_audio = AudioSegment.from_wav(folder / f"{filename}.wav")
+        silence_ms = max(0, (target_sec - actual_sec) * 1000)
+        return base_audio + step_audio + AudioSegment.silent(duration=silence_ms)
 
-        audio = AudioSegment.from_wav(
-            f"{VOICE_DIR}/{self.voice}/in{'_short' if short else ''}.wav"
+    def generate_round_audio(self, short: bool = False) -> AudioSegment:
+        durations = get_durations(self.voice)
+        voice_path = Path(VOICE_DIR) / self.voice
+        audio = AudioSegment.empty()
+
+        suffix = "_short" if short else ""
+        audio = self._add_step(
+            audio,
+            voice_path,
+            f"in{suffix}",
+            self.breathe_in,
+            durations.breathe_in_short if short else durations.breathe_in,
         )
-        audio += AudioSegment.silent(
-            (
-                self.breathe_in
-                - (durations.breathe_in_short if short else durations.breathe_in)
-            )
-            * 1000
-        )
+
         if self.hold_in > 0:
-            audio += AudioSegment.from_wav(f"{VOICE_DIR}/{self.voice}/hold.wav")
-            audio += AudioSegment.silent((self.hold_in - durations.hold) * 1000)
-        audio += AudioSegment.from_wav(
-            f"{VOICE_DIR}/{self.voice}/out{'_short' if short else ''}.wav"
-        )
-        audio += AudioSegment.silent(
-            (
-                self.breathe_out
-                - (durations.breathe_out_short if short else durations.breathe_out)
+            audio = self._add_step(
+                audio, voice_path, "hold", self.hold_in, durations.hold
             )
-            * 1000
+
+        audio = self._add_step(
+            audio,
+            voice_path,
+            f"out{suffix}",
+            self.breathe_out,
+            durations.breathe_out_short if short else durations.breathe_out,
         )
+
         if self.hold_out > 0:
-            audio += AudioSegment.from_wav(f"{VOICE_DIR}/{self.voice}/hold.wav")
-            audio += AudioSegment.silent((self.hold_out - durations.hold) * 1000)
+            audio = self._add_step(
+                audio, voice_path, "hold", self.hold_out, durations.hold
+            )
+
         return audio
 
     @cached_property
-    def _round_audio(self):
+    def _round_audio(self) -> AudioSegment:
         return self.generate_round_audio(short=False)
 
     @cached_property
-    def _round_audio_short(self):
+    def _round_audio_short(self) -> AudioSegment:
         return self.generate_round_audio(short=True)
 
     def audio(self, rounds: int) -> AudioSegment:
-        return (
-            AudioSegment.from_wav(f"{VOICE_DIR}/{self.voice}/begin.wav")
-            + self._round_audio
-            + self._round_audio_short * (rounds - 1)
-        )
+        voice_path = Path(VOICE_DIR) / self.voice
+        begin = AudioSegment.from_wav(voice_path / "begin.wav")
+
+        if rounds <= 1:
+            return begin + self._round_audio
+
+        return begin + self._round_audio + (self._round_audio_short * (rounds - 1))
 
     @cached_property
     def round_duration(self) -> float:

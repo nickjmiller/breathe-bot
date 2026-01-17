@@ -1,4 +1,4 @@
-from src.voice import Voice, get_durations
+from voice import Voice, get_durations
 
 
 def test_voice_has_display_name():

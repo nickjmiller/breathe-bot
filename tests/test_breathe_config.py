@@ -1,7 +1,7 @@
 import pytest
 
-from src.breathe_config import BreatheConfig, breathe_config_cache
-from src.voice import Voice
+from breathe_config import BreatheConfig, breathe_config_cache
+from voice import Voice
 
 
 def test_breathe_config_calculates_duration_correctly():

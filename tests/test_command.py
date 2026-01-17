@@ -1,6 +1,6 @@
 import pytest
 
-from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
+from command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
 
 
 @pytest.mark.parametrize(
@@ -53,4 +53,4 @@ from src.command import BREATHE_CHOICES, HOLD_CHOICES, ROUND_CHOICES
     ],
 )
 def test_choices_contain_expected_values(choices, expected):
-    [(choice.name.english_us, choice.value) for choice in choices] == expected
+    [(choice.name, choice.value) for choice in choices] == expected

@@ -1,165 +1,123 @@
-from unittest.mock import ANY, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import discord
 import pytest
-from interactions.client.errors import VoiceNotConnected
 
-from src.breathe_config import BreatheConfig
-from src.play import (
-    GuildAlreadyInUse,
-    MissingVoiceChannel,
-    channel_breathe,
-    guided_breathe,
-    play_condition_check,
-    stop_guided_breathe,
-    voice_channel_manager,
-)
+from breathe_config import BreatheConfig
+from play import BreathingManager
 
 
-class TestVoiceChannelManager:
+class TestBreathingManagerContext:
     @pytest.fixture
-    def channel(self) -> AsyncMock:
-        channel = AsyncMock()
-        channel.guild.id = "guild"
+    def manager(self):
+        return BreathingManager()
+
+    @pytest.fixture
+    def guild(self):
+        guild = MagicMock(spec=discord.Guild)
+        guild.id = 123
+        guild.voice_client = None
+        return guild
+
+    @pytest.fixture
+    def channel(self, guild) -> AsyncMock:
+        channel = AsyncMock(spec=discord.VoiceChannel)
+        channel.guild = guild
         return channel
 
-    @pytest.fixture
-    def voice_state(self) -> MagicMock:
-        return MagicMock()
+    async def test_connects_and_disconnects_when_not_already_connected(
+        self, manager, channel
+    ):
+        vc = AsyncMock(spec=discord.VoiceClient)
+        vc.channel = channel
+        channel.connect.return_value = vc
 
-    async def test_connects_and_disconnects_when_not_already_connected(self, channel):
-        current_guilds = set()
-
-        channel.connect.assert_not_awaited()
-        channel.disconnect.assert_not_awaited()
-        assert channel.guild.id not in current_guilds
-        async with voice_channel_manager(channel, None, current_guilds) as voice_state:
-            assert channel.guild.id in current_guilds
+        async with manager._voice_context(channel) as voice_client:
+            assert 123 in manager._active_guilds
             channel.connect.assert_awaited_once()
-            assert voice_state is channel.voice_state
+            assert voice_client is vc
 
-        assert channel.guild.id not in current_guilds
-        channel.disconnect.assert_awaited_once()
-        channel.connect.assert_awaited_once()
+        assert 123 not in manager._active_guilds
+        vc.disconnect.assert_awaited_once()
 
-    async def test_does_not_connect_when_already_connected(self, channel, voice_state):
-        current_guilds = set()
+    async def test_uses_existing_vc_if_present(self, manager, channel, guild):
+        vc = AsyncMock(spec=discord.VoiceClient)
+        vc.channel = channel
+        guild.voice_client = vc
 
-        channel.connect.assert_not_awaited()
-        channel.disconnect.assert_not_awaited()
-        assert channel.guild.id not in current_guilds
-        async with voice_channel_manager(
-            channel, voice_state, current_guilds
-        ) as voice_state:
-            assert channel.guild.id in current_guilds
+        async with manager._voice_context(channel) as voice_client:
+            assert 123 in manager._active_guilds
             channel.connect.assert_not_awaited()
-            assert voice_state is channel.voice_state
+            assert voice_client is vc
 
-        assert channel.guild.id not in current_guilds
-        channel.disconnect.assert_awaited_once()
-        channel.connect.assert_not_awaited()
-
-    async def test_ignores_disconnect_error(self, channel, voice_state):
-        current_guilds = set()
-        channel.disconnect.side_effect = VoiceNotConnected()
-
-        assert channel.guild.id not in current_guilds
-        async with voice_channel_manager(
-            channel, voice_state, current_guilds
-        ) as voice_state:
-            assert channel.guild.id in current_guilds
-            assert voice_state is channel.voice_state
-
-        assert channel.guild.id not in current_guilds
-        channel.disconnect.assert_awaited_once()
+        assert 123 not in manager._active_guilds
+        vc.disconnect.assert_awaited_once()
 
 
-class TestGuidedBreathe:
-    async def test_plays_expected_audio(self):
-        breathe_config = BreatheConfig()
-        voice_state = AsyncMock()
-        await guided_breathe(voice_state, breathe_config, 2)
-        assert voice_state.play.await_count == 2
+@patch("play.discord.FFmpegPCMAudio")
+class TestStartSession:
+    @pytest.fixture
+    def manager(self):
+        return BreathingManager()
 
+    @pytest.fixture
+    def interaction(self) -> AsyncMock:
+        interaction = AsyncMock(spec=discord.Interaction)
+        interaction.response.send_message = AsyncMock()
+        interaction.response.defer = AsyncMock()
+        interaction.followup.send = AsyncMock()
+        interaction.is_expired.return_value = False
 
-class TestPlayConditionCheck:
-    @pytest.fixture()
-    def guild_id(self) -> str:
-        return "guild"
+        guild = MagicMock(spec=discord.Guild)
+        guild.id = 123
+        guild.voice_client = None
+        interaction.guild = guild
+        interaction.guild_id = 123
 
-    @pytest.fixture()
-    def author(self, guild_id: str) -> MagicMock:
-        author = MagicMock()
-        author.voice.channel.guild.id = guild_id
-        return author
+        channel = AsyncMock(spec=discord.VoiceChannel)
+        channel.guild = guild
 
-    def test_returns_channel(self, author):
-        assert play_condition_check(set(), author) == author.voice.channel
-
-    def test_raises_when_voice_channel_missing(self, author):
-        del author.voice.channel
-        with pytest.raises(MissingVoiceChannel):
-            play_condition_check(set(), author)
-
-    def test_raises_when_already_in_set(self, author, guild_id):
-        current_guilds = set()
-        current_guilds.add(guild_id)
-        with pytest.raises(GuildAlreadyInUse):
-            play_condition_check(current_guilds, author)
-
-
-class TestChannelBreathe:
-    @pytest.fixture()
-    def channel(self) -> AsyncMock:
-        channel = AsyncMock()
-        channel.guild.id = "guild"
-        return channel
-
-    @pytest.fixture()
-    def ctx(self, channel) -> AsyncMock:
-        mock_ctx = AsyncMock()
-        author = MagicMock()
+        author = MagicMock(spec=discord.Member)
+        author.voice = MagicMock()
         author.voice.channel = channel
-        mock_ctx.author = author
+        interaction.user = author
 
-        def send(message, **kwargs):
-            return message
+        vc = MagicMock(spec=discord.VoiceClient)
+        vc.channel = channel
+        vc.is_connected.return_value = True
 
-        mock_ctx.send.side_effect = send
-        return mock_ctx
+        def mock_play(source, after):
+            after(None)
 
-    async def test_no_channel_returns_missing_voice_channel(self, ctx):
-        del ctx.author.voice.channel
-        response = await channel_breathe(set(), ctx, BreatheConfig(), 1)
-        assert response == "You need to be in a voice channel to do the exercise!"
+        vc.play.side_effect = mock_play
 
-    async def test_existing_channel_returns_channel_already_in_use(self, ctx, channel):
-        current_guilds = set()
-        current_guilds.add(channel.guild.id)
-        response = await channel_breathe(current_guilds, ctx, BreatheConfig(), 1)
-        assert response == "There is already a breathing exercise running!"
+        async def mock_connect():
+            guild.voice_client = vc
+            return vc
 
-    async def test_no_voice_after_connect_returns_unexpected_error(self, ctx):
-        ctx.author.voice.channel.voice_state = None
-        response = await channel_breathe(set(), ctx, BreatheConfig(), 1)
-        assert response == "There was an issue starting the exercise!"
+        channel.connect.side_effect = mock_connect
 
-    async def test_returns_none_when_complete(self, ctx):
-        response = await channel_breathe(set(), ctx, BreatheConfig(), 1)
-        assert response is None
-        assert ctx.send.await_count == 2
+        return interaction
 
+    async def test_successful_run(self, mock_ffmpeg, manager, interaction):
+        with patch.object(manager, "_generate_audio_file", return_value="dummy.ogg"):
+            await manager.start_session(interaction, BreatheConfig(), 1)
 
-class TestStopGuidedBreathe:
-    async def test_sends_error_when_no_exercise_found(self):
-        ctx = AsyncMock()
-        ctx.voice_state = None
-        await stop_guided_breathe(ctx)
-        ctx.send.assert_awaited_once_with(
-            "No current breathing exercises found in this server!", delete_after=ANY
-        )
+        interaction.response.defer.assert_awaited_once()
+        assert interaction.followup.send.await_count >= 2
 
-    async def test_disconnects(self):
-        ctx = AsyncMock()
+    async def test_no_channel_returns_error_message(
+        self, mock_ffmpeg, manager, interaction
+    ):
+        interaction.user.voice = None
+        await manager.start_session(interaction, BreatheConfig(), 1)
+        interaction.response.send_message.assert_awaited_once()
 
-        await stop_guided_breathe(ctx)
-        ctx.voice_state.channel.disconnect.assert_awaited_once()
+    async def test_guild_already_active(self, mock_ffmpeg, manager, interaction):
+        manager._active_guilds.add(123)
+
+        await manager.start_session(interaction, BreatheConfig(), 1)
+
+        interaction.response.send_message.assert_awaited_once()
+        args, _ = interaction.response.send_message.call_args
+        assert "Session already running" in args[0]

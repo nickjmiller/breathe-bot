@@ -1,128 +1,140 @@
+import asyncio
 import logging
+import os
 import tempfile
 from contextlib import asynccontextmanager
+from typing import Optional, Set
 
-from interactions import (
-    TYPE_VOICE_CHANNEL,
-    ActiveVoiceState,
-    Member,
-    SlashContext,
-    Snowflake,
-    User,
-    VoiceState,
-)
-from interactions.api.voice.audio import AudioVolume
-from interactions.client.errors import VoiceNotConnected
+import discord
 
-from .breathe_config import BreatheConfig
-
-
-class GuildAlreadyInUse(Exception):
-    """Guild is already in use for the player."""
-
-    pass
-
-
-class MissingVoiceChannel(Exception):
-    """Requester is not in a voice channel."""
-
-    pass
-
+from breathe_config import BreatheConfig
 
 logger = logging.getLogger(__name__)
 
 
-def play_condition_check(
-    current_guilds: set[Snowflake],
-    author: Member | User,
-) -> TYPE_VOICE_CHANNEL:
-    try:
-        channel = author.voice.channel  # ty: ignore[possibly-unbound-attribute]
-    except AttributeError:
-        logger.info(
-            f"Attempted to start breathing exercise without a voice channel, {author.id}"
-        )
-        raise MissingVoiceChannel("Author is not in a voice channel.")
-    if channel.guild.id in current_guilds:
-        logger.info(
-            f"Attempted to start breathing exercise while already playing in a channel, guild={channel.guild.id}"
-        )
-        raise GuildAlreadyInUse(f"Guild {channel.guild} is already in use.")
-    return channel
+VoiceChannelType = discord.VoiceChannel | discord.StageChannel
 
 
-@asynccontextmanager
-async def voice_channel_manager(
-    channel: TYPE_VOICE_CHANNEL,
-    voice_state: VoiceState | None,
-    current_guilds: set[Snowflake],
-):
-    current_guilds.add(channel.guild.id)
-    if not voice_state:
-        await channel.connect()
-    try:
-        yield channel.voice_state
-    finally:
+class BreathingManager:
+    def __init__(self):
+        self._active_guilds: Set[int] = set()
+
+    def _validate_request(
+        self, interaction: discord.Interaction
+    ) -> Optional[VoiceChannelType]:
+        if (
+            not isinstance(interaction.user, discord.Member)
+            or not interaction.user.voice
+        ):
+            return None
+
+        channel = interaction.user.voice.channel
+        if not channel or interaction.guild_id in self._active_guilds:
+            return None
+
+        return channel
+
+    async def _generate_audio_file(self, config: BreatheConfig, rounds: int) -> str:
+        loop = asyncio.get_running_loop()
+
+        def _write():
+            fd, path = tempfile.mkstemp(suffix=".ogg")
+            try:
+                audio = config.audio(rounds)
+                with os.fdopen(fd, "wb") as f:
+                    audio.export(f, format="ogg")
+            except Exception:
+                os.close(fd)
+                os.remove(path)
+                raise
+            return path
+
+        return await loop.run_in_executor(None, _write)
+
+    async def _play_until_done(
+        self, vc: discord.VoiceClient, source: discord.AudioSource
+    ):
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
+        def after(error):
+            if not future.done():
+                loop.call_soon_threadsafe(future.set_result, error)
+
+        vc.play(source, after=after)
+        await future
+
+    @asynccontextmanager
+    async def _voice_context(self, channel: VoiceChannelType):
+        guild_id = channel.guild.id
+        self._active_guilds.add(guild_id)
+
+        vc = channel.guild.voice_client
+        if not vc:
+            vc = await channel.connect()
+        elif vc.channel != channel:
+            await vc.move_to(channel)  # ty:ignore[unresolved-attribute]
+        if not isinstance(vc, discord.VoiceClient):
+            self._active_guilds.discard(guild_id)
+            raise RuntimeError("Could not establish a valid VoiceClient connection.")
         try:
-            await channel.disconnect()
-        except VoiceNotConnected:
-            logger.warning("Bot already disconnected before disconnect called.")
-            pass
+            yield vc
         finally:
-            current_guilds.remove(channel.guild.id)
+            if vc.is_connected():
+                await vc.disconnect(force=True)
+            self._active_guilds.discard(guild_id)
 
+    async def start_session(
+        self, interaction: discord.Interaction, config: BreatheConfig, rounds: int
+    ):
+        target_channel = self._validate_request(interaction)
 
-async def guided_breathe(
-    voice_state: ActiveVoiceState, breathe_config: BreatheConfig, rounds: int
-):
-    with tempfile.NamedTemporaryFile(suffix=".ogg") as tmpfile:
-        logger.info(f"Created temporary file at: {tmpfile.name}")
-        breathe_config.audio(rounds).export(tmpfile, format="ogg")
-        await voice_state.play(AudioVolume(tmpfile.name))
-    await voice_state.play(AudioVolume("assets/done.ogg"))
-
-
-async def channel_breathe(
-    current_guilds: set[Snowflake],
-    ctx: SlashContext,
-    breathe_config: BreatheConfig,
-    rounds: int,
-):
-    try:
-        channel = play_condition_check(current_guilds, ctx.author)
-    except MissingVoiceChannel:
-        return await ctx.send(
-            "You need to be in a voice channel to do the exercise!", delete_after=10
-        )
-    except GuildAlreadyInUse:
-        return await ctx.send(
-            "There is already a breathing exercise running!", delete_after=20
-        )
-    async with voice_channel_manager(
-        channel, ctx.voice_state, current_guilds
-    ) as voice_state:
-        await ctx.send(
-            f"Starting guided breathing for {(breathe_config.round_duration * rounds):.0f} seconds!",
-            delete_after=100,
-        )
-        if voice_state is None:
-            logger.error(
-                f"Voice state was none after connecting to the channel, {ctx=}"
+        if not target_channel:
+            msg = (
+                "You must be in a voice channel."
+                if hasattr(interaction.user, "voice") and not interaction.user.voice
+                else "Session already running."
             )
-            return await ctx.send(
-                "There was an issue starting the exercise!", delete_after=20
+            return await interaction.response.send_message(
+                msg, ephemeral=True, delete_after=10
             )
-        await guided_breathe(voice_state, breathe_config, rounds)
-    await ctx.send("Done!", silent=True, delete_after=10)
 
+        await interaction.response.defer()
 
-async def stop_guided_breathe(ctx: SlashContext):
-    if ctx.voice_state is None:
-        logger.info(
-            f"Tried stopping a guided breathing with no voice context, {ctx.guild_id=}"
+        temp_path = None
+        try:
+            async with self._voice_context(target_channel) as vc:
+                duration = config.round_duration * rounds
+                await interaction.followup.send(
+                    f"Starting guided breathing for {duration:.0f} seconds!"
+                )
+
+                temp_path = await self._generate_audio_file(config, rounds)
+                await self._play_until_done(vc, discord.FFmpegPCMAudio(temp_path))
+
+                if vc.is_connected():
+                    await self._play_until_done(
+                        vc, discord.FFmpegPCMAudio("assets/done.ogg")
+                    )
+                    await interaction.followup.send("Done!")
+
+        except Exception:
+            logger.exception("Error during breathing session")
+            await interaction.followup.send(
+                "An error occurred during the session.", ephemeral=True
+            )
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    async def stop_session(self, interaction: discord.Interaction):
+        if not interaction.guild or not interaction.guild.voice_client:
+            return await interaction.response.send_message(
+                "No active session found.", delete_after=10, ephemeral=True
+            )
+
+        await interaction.guild.voice_client.disconnect(force=True)
+        # Context manager in start_session handles cleanup
+        await interaction.response.send_message(
+            "Session stopped.", delete_after=10, ephemeral=True
         )
-        return await ctx.send(
-            "No current breathing exercises found in this server!", delete_after=10
-        )
-    await ctx.voice_state.channel.disconnect()
-    await ctx.send("Stopped!", delete_after=10)

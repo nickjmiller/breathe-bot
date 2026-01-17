@@ -1,56 +1,22 @@
-from interactions import OptionType, SlashCommandChoice, slash_option
+from discord import app_commands
+from discord.app_commands import Choice
 
-from .voice import Voice
+from voice import Voice
 
 MAX_DURATION = 10
-ROUND_CHOICES = [SlashCommandChoice(name=str(i), value=i) for i in range(1, 11)]
-BREATHE_CHOICES = [
-    SlashCommandChoice(name=str(i), value=i) for i in range(2, MAX_DURATION + 1)
-]
-HOLD_CHOICES = [SlashCommandChoice(name="None", value=0)] + BREATHE_CHOICES
-VOICE_CHOICES = [
-    SlashCommandChoice(name=voice.display_name, value=voice) for voice in Voice
-]
 
-round_option = slash_option(
-    name="rounds",
-    description="How many rounds",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=ROUND_CHOICES,
-)
-breathe_in_option = slash_option(
-    name="breathe_in",
-    description="How long to breathe in",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=BREATHE_CHOICES,
-)
-hold_in_option = slash_option(
-    name="hold_in",
-    description="How long to hold in",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=HOLD_CHOICES,
-)
-breathe_out_option = slash_option(
-    name="breathe_out",
-    description="How long to breathe out",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=BREATHE_CHOICES,
-)
-hold_out_option = slash_option(
-    name="hold_out",
-    description="How long to hold out",
-    required=True,
-    opt_type=OptionType.INTEGER,
-    choices=HOLD_CHOICES,
-)
-voice_option = slash_option(
-    "voice",
-    description="Voice for the guided exercise",
-    required=False,
-    opt_type=OptionType.STRING,
-    choices=VOICE_CHOICES,
-)
+
+# Helper to create Choice objects
+def make_choice(name, value) -> Choice:
+    return app_commands.Choice(name=str(name), value=value)
+
+
+ROUND_CHOICES = [make_choice(i, i) for i in range(1, 11)]
+
+BREATHE_CHOICES = [make_choice(i, i) for i in range(2, MAX_DURATION + 1)]
+
+HOLD_CHOICES = [make_choice("None", 0)] + BREATHE_CHOICES
+
+VOICE_CHOICES = [
+    app_commands.Choice(name=voice.display_name, value=voice.value) for voice in Voice
+]

@@ -5,7 +5,7 @@ description = "Breathing assistant for discord."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "discord-py-interactions[voice]>=5.15.0",
+    "discord-py[voice]>=2.6.4",
     "pre-commit>=4.2.0",
     "pydub>=0.25.1",
     "python-dotenv>=1.1.0",
@@ -20,6 +20,12 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.uv]
+package = true
+
+[tool.ty.environment]
+root = ["./src"]
 
 [tool.ty.src]
 exclude = ["docs"]
